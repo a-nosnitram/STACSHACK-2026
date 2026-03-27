@@ -6,4 +6,6 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "mediapipe>=0.10.33",
+    "pyautogui>=0.9.54",
+    "screeninfo>=0.8.1",
 ]
