@@ -2,6 +2,7 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
+from game.ui import draw_progress_bar, load_stages
 
 async def run_game():
     # Initialize Pygame
@@ -36,6 +37,11 @@ async def run_game():
     running = True
     frame = 0
     fireballs = []
+    
+    # Initialize stages
+    stages = load_stages()
+    current_stage = 1
+    
     while running:
         # Fill the screen with the background image
         screen.blit(background_image, (0, 0))
@@ -45,6 +51,9 @@ async def run_game():
                   left_player_y, screen, frame)
         draw_idle(right_player_name, right_player_x,
                   right_player_y, screen, frame, flipped=True)
+
+        # Draw progress bar
+        draw_progress_bar(screen, current_stage, stages, frame)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -71,6 +80,11 @@ async def run_game():
                             direction=-1,
                         )
                     )
+                # simulate progression with 'p'
+                if event.key == pygame.K_p:
+                    current_stage += 1
+                    if current_stage > len(stages):
+                        current_stage = 1 # reset for now
 
         # update and draw fireballs
         for fireball in fireballs:
