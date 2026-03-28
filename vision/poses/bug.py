@@ -113,7 +113,8 @@ def dead_bug_metrics(normalized_landmarks, *, p_min=0.5):
     elbow_angle = angle_deg(shoulder, elbow, wrist)
 
     wrist_dx = abs(wrist[0] - shoulder[0])
-    wrist_above = shoulder[1] - wrist[1]  # >0 means wrist is above shoulder in image coords
+    # >0 means wrist is above shoulder in image coords
+    wrist_above = shoulder[1] - wrist[1]
 
     return {
         "side": side,
@@ -160,8 +161,6 @@ def dead_bug_match(
     knee_err = abs(m["knee_angle"] - knee_angle_target)
     hip_err = abs(m["hip_angle"] - hip_angle_target)
 
-    print(f"dead bug metrics: torso_flat={m['torso_flat']:.1f}, knee_angle={m['knee_angle']:.1f}, hip_angle={m['hip_angle']:.1f}, elbow_angle={m['elbow_angle']:.1f}, wrist_dx={m['wrist_dx']:.2f}, wrist_above={m['wrist_above']:.2f}")
-
     matched = (
         m["torso_flat"] <= torso_flat_max
         and knee_err <= knee_angle_err_max
@@ -174,9 +173,11 @@ def dead_bug_match(
     torso_score = score_below(m["torso_flat"], torso_flat_max, torso_flat_soft)
     knee_score = score_below_abs(knee_err, knee_angle_err_max, knee_err_soft)
     hip_score = score_below_abs(hip_err, hip_angle_err_max, hip_err_soft)
-    elbow_score = score_below(180.0 - m["elbow_angle"], 180.0 - elbow_angle_min, elbow_soft)
+    elbow_score = score_below(
+        180.0 - m["elbow_angle"], 180.0 - elbow_angle_min, elbow_soft)
     wrist_dx_score = score_below(m["wrist_dx"], wrist_dx_max, wrist_dx_soft)
-    wrist_up_score = score_below(0.0 - m["wrist_above"], 0.0 - wrist_above_min, wrist_above_soft)
+    wrist_up_score = score_below(
+        0.0 - m["wrist_above"], 0.0 - wrist_above_min, wrist_above_soft)
 
     match_index = (
         0.25 * torso_score

@@ -9,7 +9,7 @@ from game.main import run_game
 
 
 async def main():
-    server = await websockets.serve(process_stream, "0.0.0.0", 8765)
+    await websockets.serve(process_stream, "0.0.0.0", 8765)
 
     print("Server running...")
 
