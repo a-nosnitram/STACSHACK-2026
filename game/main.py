@@ -2,19 +2,29 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
-from game.server import run_flask
+from shared.bus import game_to_vision, vision_to_game
+from game.menu import run_pose_menu
 
 
 async def run_game():
     # Initialize Pygame
     pygame.init()
 
-    # start flask server
-    run_flask()
-
     # screen settings
     screen_width = 1400
     screen_height = 700
+
+    # call settings
+    surface = pygame.display.set_mode((screen_width, screen_height))
+    poses = ["squat", "kick", "jab", "plank", "bug", "dog"]
+    # selected_poses = await run_pose_menu(surface, poses)
+    selected_poses = ["squat", "kick", "jab"]
+
+    await game_to_vision.put({
+        "type": "start_match",
+        "poses": selected_poses,
+        "rounds_ms": 3000
+    })
 
     # Set up the game window
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -48,6 +58,11 @@ async def run_game():
     while running:
         # Fill the screen with the background image
         screen.blit(background_image, (0, 0))
+
+        while not vision_to_game.empty():
+            msg = await vision_to_game.get()
+            if msg["type"] == "round_result":
+                last_player = msg["winner"]
 
         # draw idle sprites
         draw_idle(left_player_name, left_player_x,
