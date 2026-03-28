@@ -60,7 +60,8 @@ async def run_vision():
                 print(f"Vision received message: {msg}")
                 if msg["type"] == "start_match":
                     poses = list(msg["poses"])
-                    round_ms = int(msg.get("rounds_ms", msg.get("round_ms", 3000)))
+                    round_ms = int(
+                        msg.get("rounds_ms", msg.get("round_ms", 3000)))
                     prep_ms = round_ms
                     hold_ms = round_ms
                     round_index = 0
@@ -74,6 +75,8 @@ async def run_vision():
                     print("Stopping match")
                     match_active = False
                     ui_state["recognition_active"] = False
+
+            # print(f"Clients connected: {len(clients)}")
 
             if not clients:
                 await asyncio.sleep(0.01)
@@ -116,7 +119,8 @@ async def run_vision():
 
                     phase_text = "Get ready" if in_prep else "Hold pose"
                     time_left_ms = (
-                        prep_ms - elapsed if in_prep else (prep_ms + hold_ms - elapsed)
+                        prep_ms -
+                        elapsed if in_prep else (prep_ms + hold_ms - elapsed)
                     )
                     time_left = max(0, int(time_left_ms / 1000))
                     cv2.putText(

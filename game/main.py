@@ -61,7 +61,8 @@ async def run_game():
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("SUPERPOSITION")
 
-    background_image = pygame.image.load("assets/backgrounds/bg-forest.bmp").convert()
+    background_image = pygame.image.load(
+        "assets/backgrounds/bg-forest.bmp").convert()
     # set the background image to fill the entire window
     background_image = pygame.transform.scale(
         background_image, (screen_width, screen_height)
@@ -103,7 +104,8 @@ async def run_game():
                 last_player = msg["winner"]
 
         # draw idle sprites
-        draw_idle(left_player_name, left_player_x, left_player_y, screen, frame)
+        draw_idle(left_player_name, left_player_x,
+                  left_player_y, screen, frame)
         draw_idle(
             right_player_name,
             right_player_x,
