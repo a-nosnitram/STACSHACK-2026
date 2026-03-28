@@ -1,5 +1,5 @@
 import cv2
-from vision.pose_recognition import capture_pose_template
+from vision.pose_match import capture_pose_template
 
 
 def handle_countdown_and_capture(

@@ -1,5 +1,5 @@
 import cv2
-from vision.pose_recognition import match_expected_pose
+from vision.pose_match import match_expected_pose
 
 
 def handle_pose_recognition(frame, result, pose_name, ui_state):

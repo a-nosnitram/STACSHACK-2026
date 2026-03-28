@@ -9,78 +9,13 @@ Best with a SIDE camera view.
 """
 
 import math
+from vision.pose_match import angle_deg, choose_side, get, xy, score_above, score_below
 
 # MediaPipe indices
 LS, RS = 11, 12
 LH, RH = 23, 24
 LK, RK = 25, 26
 LA, RA = 27, 28
-
-
-def get(lms, i):
-    return lms[i]
-
-
-def xy(lm):
-    return float(lm.x), float(lm.y)
-
-
-def presence(lm):
-    return float(getattr(lm, "presence", 1.0))
-
-
-def angle_deg(a, b, c):
-    """Angle ABC in degrees using 2D points a,b,c = (x,y)."""
-    ax, ay = a
-    bx, by = b
-    cx, cy = c
-
-    ba = (ax - bx, ay - by)
-    bc = (cx - bx, cy - by)
-
-    ba_len = math.hypot(ba[0], ba[1])
-    bc_len = math.hypot(bc[0], bc[1])
-    denom = (ba_len * bc_len) + 1e-9
-
-    cosv = (ba[0] * bc[0] + ba[1] * bc[1]) / denom
-    cosv = max(-1.0, min(1.0, cosv))
-    return math.degrees(math.acos(cosv))
-
-
-def choose_side(lms, *, p_min=0.5):
-    """
-    Choose left or right leg based on presence of (hip,knee,ankle).
-    Returns "L", "R", or None.
-    """
-    left_ok = presence(get(lms, LH)) >= p_min and presence(get(lms, LK)) >= p_min and presence(get(lms, LA)) >= p_min
-    right_ok = presence(get(lms, RH)) >= p_min and presence(get(lms, RK)) >= p_min and presence(get(lms, RA)) >= p_min
-
-    if not left_ok and not right_ok:
-        return None
-    if left_ok and not right_ok:
-        return "L"
-    if right_ok and not left_ok:
-        return "R"
-
-    left_score = presence(get(lms, LH)) + presence(get(lms, LK)) + presence(get(lms, LA))
-    right_score = presence(get(lms, RH)) + presence(get(lms, RK)) + presence(get(lms, RA))
-    return "L" if left_score >= right_score else "R"
-
-
-def _clamp01(x: float) -> float:
-    return 0.0 if x < 0.0 else 1.0 if x > 1.0 else float(x)
-
-
-def _score_below(value: float, limit: float, soft: float) -> float:
-    """1.0 when value is <= limit-soft, 0.0 when value >= limit."""
-    soft = max(1e-6, float(soft))
-    return _clamp01((limit - value) / soft)
-
-
-def _score_above(value: float, limit: float, soft: float) -> float:
-    """1.0 when value is >= limit+soft, 0.0 when value <= limit."""
-    soft = max(1e-6, float(soft))
-    return _clamp01((value - limit) / soft)
 
 def squat_metrics(normalized_landmarks, *, p_min=0.5):
     """
@@ -164,10 +99,10 @@ def squat_match(
     )
 
     # Smooth 0..1 "matching index" for UI/mana meters.
-    knee_score = _score_below(m["knee_angle"], knee_angle_max, knee_soft_deg)
-    hip_score = _score_below(m["hip_angle"], hip_angle_max, hip_soft_deg)
-    torso_score = _score_below(m["torso_lean"], torso_lean_max, torso_soft_deg)
-    drop_score = _score_above(m["hip_drop"], hip_drop_min, hip_drop_soft)
+    knee_score = score_below(m["knee_angle"], knee_angle_max, knee_soft_deg)
+    hip_score = score_below(m["hip_angle"], hip_angle_max, hip_soft_deg)
+    torso_score = score_below(m["torso_lean"], torso_lean_max, torso_soft_deg)
+    drop_score = score_above(m["hip_drop"], hip_drop_min, hip_drop_soft)
 
     # Weighted average (emphasize knee + hip).
     match_index = (0.35 * knee_score + 0.35 * hip_score + 0.2 * drop_score + 0.1 * torso_score)
