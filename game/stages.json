@@ -1,0 +1,24 @@
+{
+  "stages": [
+    {
+      "number": 1,
+      "pose": "squat",
+      "image": "assets/sprites/soph/idle/1.bmp"
+    },
+    {
+      "number": 2,
+      "pose": "squat",
+      "image": "assets/sprites/soph/idle/2.bmp"
+    },
+    {
+      "number": 3,
+      "pose": "squat",
+      "image": "assets/sprites/soph/idle/1.bmp"
+    },
+    {
+      "number": 4,
+      "pose": "squat",
+      "image": "assets/sprites/soph/idle/2.bmp"
+    }
+  ]
+}
