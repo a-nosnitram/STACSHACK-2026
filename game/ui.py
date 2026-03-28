@@ -8,9 +8,34 @@ def load_stages():
         return json.load(f)["stages"]
 
 
+def draw_hp_bar(screen, hp, x, y, name, flipped=False):
+    bar_width = 300
+    bar_height = 30
+    
+    # Draw background
+    pygame.draw.rect(screen, (50, 50, 50), (x, y, bar_width, bar_height), border_radius=5)
+    
+    # Draw HP
+    hp_width = int(bar_width * (max(0, hp) / 16.0))
+    hp_color = (0, 255, 0) if hp > 5 else (255, 0, 0)
+    
+    if flipped:
+        pygame.draw.rect(screen, hp_color, (x + bar_width - hp_width, y, hp_width, bar_height), border_radius=5)
+    else:
+        pygame.draw.rect(screen, hp_color, (x, y, hp_width, bar_height), border_radius=5)
+    
+    # Draw Name
+    font = pygame.font.SysFont(None, 24)
+    text = font.render(f"{name}: {hp}", True, (255, 255, 255))
+    if flipped:
+        screen.blit(text, (x + bar_width - text.get_width(), y - 25))
+    else:
+        screen.blit(text, (x, y - 25))
+
+
 def draw_progress_bar(screen, current_stage, stages, frame):
     total_stages = len(stages)
-    screen_width, bar_width = screen.get_size()
+    screen_width, _ = screen.get_size()
 
     # Progress bar dimensions and position
     bar_width = 400
@@ -99,7 +124,7 @@ def draw_hp_bars(screen, left_hp, right_hp):
     screen_width = screen.get_width()
     # Left player HP
     pygame.draw.rect(screen, (255, 0, 0), (50, 20, 200, 20))
-    pygame.draw.rect(screen, (0, 255, 0), (50, 20, left_hp * 2, 20))
+    pygame.draw.rect(screen, (0, 255, 0), (50, 20, max(0, left_hp) * 2, 20))
     # Right player HP
     pygame.draw.rect(screen, (255, 0, 0), (screen_width - 250, 20, 200, 20))
-    pygame.draw.rect(screen, (0, 255, 0), (screen_width - 250, 20, right_hp * 2, 20))
+    pygame.draw.rect(screen, (0, 255, 0), (screen_width - 250, 20, max(0, right_hp) * 2, 20))

@@ -5,6 +5,7 @@ from game.sprites import draw_idle
 from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bars
 from shared.bus import game_to_vision, vision_to_game
 from game.menu import run_pose_menu
+from game.startScreen import run_start_screen
 
 
 def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
@@ -37,8 +38,17 @@ async def run_game():
     # call settings
     surface = pygame.display.set_mode((screen_width, screen_height))
 
+    startscreen_background_image = pygame.image.load(
+        "assets/backgrounds/bg-forest.bmp").convert()
+    # set the background image to fill the entire window
+    startscreen_background_image = pygame.transform.scale(
+        startscreen_background_image, (screen_width, screen_height))
+    
+    # Start screen view
+    run_start_screen(surface, startscreen_background_image)
+
     # all the poses that we obviously have implemented so far
-    poses = ["squat", "joppa", "hui", "plank", "bug", "dog"]
+    poses = ["squat", "bear", "plank", "bug", "lunge"]
 
     selected_poses = run_pose_menu(surface, poses)
 
@@ -133,6 +143,7 @@ async def run_game():
                         y=left_player_y + 40,
                         target_x=right_player_x - 40,
                         direction=1,
+                        sender="1",
                     )
                 )
             else:
@@ -143,6 +154,7 @@ async def run_game():
                         y=right_player_y + 40,
                         target_x=left_player_x + 40,
                         direction=-1,
+                        sender="2",
                     )
                 )
             
@@ -155,13 +167,17 @@ async def run_game():
 
         # update and draw fireballs
         for fireball in fireballs:
+            old_active = fireball.active
             fireball.update()
-            if not fireball.active:
-                if fireball.direction > 0:
-                    right_player_hp -= 20
-                else:
-                    left_player_hp -= 20
             fireball.draw(screen)
+
+            # Check for hit (when it becomes inactive)
+            if old_active and not fireball.active:
+                if fireball.sender == "1":
+                    right_player_hp -= 25
+                else:
+                    left_player_hp -= 25
+
         fireballs = [fireball for fireball in fireballs if fireball.active]
 
         # Check for win condition
@@ -176,7 +192,6 @@ async def run_game():
         )
 
         pygame.display.flip()
-
 
         frame += 1
         clock.tick(60)
