@@ -5,6 +5,7 @@ from game.sprites import draw_idle
 from game.ui import draw_progress_bar, load_stages, draw_hp_bar
 from shared.bus import game_to_vision, vision_to_game
 from game.menu import run_pose_menu
+from game.startScreen import run_start_screen
 
 
 async def run_game():
@@ -17,6 +18,17 @@ async def run_game():
 
     # call settings
     surface = pygame.display.set_mode((screen_width, screen_height))
+
+
+    startscreen_background_image = pygame.image.load(
+        "assets/backgrounds/bg-forest.bmp").convert()
+    # set the background image to fill the entire window
+    startscreen_background_image = pygame.transform.scale(
+        startscreen_background_image, (screen_width, screen_height))
+    
+    # Start screen view
+    run_start_screen(surface, startscreen_background_image)
+
 
     # all the poses that we obviously have implemented so far
     poses = ["squat", "bear", "plank", "bug", "dog"]
@@ -56,6 +68,7 @@ async def run_game():
     running = True
     frame = 0
     fireballs = []
+
 
     # Initialize stages
     stages = load_stages()
