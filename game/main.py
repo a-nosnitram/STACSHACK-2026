@@ -181,7 +181,9 @@ async def run_game():
             
             # A "round" ends when a winner is decided and an attack is launched.
             rounds_played += 1
-            current_stage += 1
+            if current_stage < rounds_total:
+                current_stage += 1
+            
             if rounds_total > 0 and rounds_played >= rounds_total:
                 # Let the final projectile land, then end the game.
                 end_after_fireballs = True
@@ -197,9 +199,9 @@ async def run_game():
             # Check for hit (when it becomes inactive)
             if old_active and not fireball.active:
                 if fireball.sender == "1":
-                    right_player_hp -= 25
+                    right_player_hp -= 20
                 else:
-                    left_player_hp -= 25
+                    left_player_hp -= 20
 
         fireballs = [fireball for fireball in fireballs if fireball.active]
 
