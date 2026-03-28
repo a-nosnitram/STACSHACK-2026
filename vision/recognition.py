@@ -6,7 +6,7 @@ def handle_pose_recognition(frame, result, pose_name, ui_state):
     """Handles pose recognition and draws status on frame."""
     match_text = "Recognition: OFF (press 'r')"
     matched = False
-    dist_value = None
+    score_value = None
     recognition_active = ui_state["recognition_active"]
 
     if recognition_active:
@@ -24,11 +24,10 @@ def handle_pose_recognition(frame, result, pose_name, ui_state):
                 match_text = f"{pose_name}: not enough usable landmarks"
             else:
                 _matched, match_index = out
-                # match_text = f"{pose_name} dist:{dist_value:.3f} " + (
-                #     "MATCH" if matched else "NO MATCH"
-                # )
+                score_value = match_index
                 matched = match_index >= 0.7
-                match_text = f"{pose_name} idx:{match_index:.3f}" + ("MATCH" if matched else "NO MATCH")
+                match_text = f"{pose_name} idx: {match_index:.3f} " + \
+                    ("MATCH" if matched else "NO MATCH")
 
     # Draw recognition status
     color = (0, 255, 0) if matched else (255, 255, 255)
@@ -41,4 +40,4 @@ def handle_pose_recognition(frame, result, pose_name, ui_state):
         color,
         2,
     )
-    return frame, matched, dist_value
+    return frame, matched, score_value

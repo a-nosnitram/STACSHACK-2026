@@ -38,10 +38,19 @@ start_time = time.monotonic()
 
 COUNTDOWN_SEC = 5
 
-recognition_active = False
+poses: list[str] = []
+round_ms = 3000
+prep_ms = 3000
+hold_ms = 3000
+round_index = 0
+round_start_ms = 0
+match_active = False
+best_scores: dict[int, float] = {}
+last_timestamp_ms = 0
 
 
 async def run_vision():
+    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, best_scores, last_timestamp_ms
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
             now_ms = int((time.monotonic() - start_time) * 1000)
@@ -50,16 +59,27 @@ async def run_vision():
                 msg = await game_to_vision.get()
                 print(f"Vision received message: {msg}")
                 if msg["type"] == "start_match":
-                    poses = msg["poses"]
+                    poses = list(msg["poses"])
+                    round_ms = int(msg.get("rounds_ms", msg.get("round_ms", 3000)))
+                    prep_ms = round_ms
+                    hold_ms = round_ms
+                    round_index = 0
+                    round_start_ms = now_ms
+                    match_active = True
+                    best_scores = {}
+                    ui_state["recognition_active"] = False
                     print(f"Starting match with poses: {poses}")
-                    coutdown = msg["rounds_ms"] // 1000
-                    print(f"Countdown: {coutdown} seconds")
+                    print(f"Prep: {prep_ms} ms, Hold: {hold_ms} ms")
+                if msg["type"] == "stop_match":
+                    print("Stopping match")
+                    match_active = False
+                    ui_state["recognition_active"] = False
 
             if not clients:
                 await asyncio.sleep(0.01)
                 continue
 
-            for client_id, frame in clients.items():
+            for client_id, frame in list(clients.items()):
                 if frame is None:
                     continue
 
@@ -69,17 +89,73 @@ async def run_vision():
                 mp_image = mp.Image(
                     image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
-                timestamp_ms = int((time.monotonic() - start_time) * 1000)
+                timestamp_ms = max(now_ms, last_timestamp_ms + 1)
+                last_timestamp_ms = timestamp_ms
                 result = landmarker.detect_for_video(mp_image, timestamp_ms)
-
                 frame = draw_landmarks(frame, result)
 
-                for pose in poses:
-                    frame, matched, dist = handle_pose_recognition(
-                        frame, result, "bear", ui_state
+                if match_active and poses:
+                    elapsed = now_ms - round_start_ms
+                    in_prep = elapsed < prep_ms
+                    in_hold = prep_ms <= elapsed < (prep_ms + hold_ms)
+
+                    ui_state["recognition_active"] = in_hold
+                    current_pose = poses[round_index]
+                    if in_hold:
+                        frame, matched, score = handle_pose_recognition(
+                            frame, result, current_pose, ui_state
+                        )
+                        if score is not None:
+                            best_scores[client_id] = max(
+                                best_scores.get(client_id, 0.0), score
+                            )
+                    else:
+                        frame, _matched, _score = handle_pose_recognition(
+                            frame, result, current_pose, ui_state
+                        )
+
+                    phase_text = "Get ready" if in_prep else "Hold pose"
+                    time_left_ms = (
+                        prep_ms - elapsed if in_prep else (prep_ms + hold_ms - elapsed)
+                    )
+                    time_left = max(0, int(time_left_ms / 1000))
+                    cv2.putText(
+                        frame,
+                        f"{phase_text}: {current_pose} ({time_left}s)",
+                        (30, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8,
+                        (255, 255, 0),
+                        2,
                     )
 
                 cv2.imshow(f"Client {client_id}", frame)
+
+            # handle round timing and results
+            if match_active and poses:
+                elapsed = now_ms - round_start_ms
+                if elapsed >= (prep_ms + hold_ms):
+                    winner = None
+                    if best_scores:
+                        winner = max(best_scores, key=best_scores.get)
+                    await vision_to_game.put(
+                        {
+                            "type": "round_result",
+                            "round": round_index + 1,
+                            "pose": poses[round_index],
+                            "winner": winner,
+                            "scores": best_scores,
+                        }
+                    )
+                    round_index += 1
+                    best_scores = {}
+                    round_start_ms = now_ms
+                    if round_index >= len(poses):
+                        match_active = False
+                        ui_state["recognition_active"] = False
+                        await vision_to_game.put(
+                            {"type": "match_complete", "poses": poses}
+                        )
 
             key = cv2.waitKey(5) & 0xFF
             if key == 27:
