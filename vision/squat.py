@@ -1,7 +1,8 @@
-#vision/squat.py
+# vision/squat.py
 
 import math
-from vision.pose_match import angle_deg, get, xy, score_above, score_below, presence
+
+from vision.pose_utils import angle_deg, get, presence, score_above, score_below, xy
 
 # MediaPipe indices
 LS, RS = 11, 12
@@ -9,7 +10,7 @@ LH, RH = 23, 24
 LK, RK = 25, 26
 LA, RA = 27, 28
 
-def _choose_side(lms, p_min=0.5):
+def choose_side(lms, p_min=0.5):
     """
     Pick left or right leg based on presence of hip/knee/ankle.
     Returns "L" or "R" or None.

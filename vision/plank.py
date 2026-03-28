@@ -1,7 +1,18 @@
-#vision/plank.py
-
 import math
-from vision.pose_match import LH, LS, LW, RH, RS, RW, get, score_below, xy, score_below_abs, presence
+
+from vision.pose_utils import (
+    LH,
+    LS,
+    LW,
+    RH,
+    RS,
+    RW,
+    get,
+    presence,
+    score_below,
+    score_below_abs,
+    xy,
+)
 
 
 def _choose_side(lms, p_min=0.5):
