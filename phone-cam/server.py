@@ -6,6 +6,17 @@ import cv2
 import numpy as np
 import base64
 
+
+def decode(message):
+    if "," in message:
+        message = message.split(",")[1]
+
+    img_bytes = base64.b64decode(message)
+    np_arr = np.frombuffer(img_bytes, np.uint8)
+    return cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+
+clients = {}
 client_id_counter = 0
 
 
@@ -14,30 +25,12 @@ async def process_stream(websocket):
     client_id = client_id_counter
     client_id_counter += 1
 
-    print(f"Phone {client_id} connected!")
+    clients[client_id] = None
+    print(f"Phone {client_id} connected")
 
     async for message in websocket:
-        try:
-            if "," in message:
-                message = message.split(",")[1]
-
-            img_bytes = base64.b64decode(message)
-            np_arr = np.frombuffer(img_bytes, np.uint8)
-            frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
-            if frame is None:
-                continue
-
-            cv2.imshow(f"Phone {client_id}", frame)
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-        except Exception as e:
-            print(f"Error (client {client_id}):", e)
-
-    print(f"Phone {client_id} disconnected")
-    cv2.destroyWindow(f"Phone {client_id}")
+        frame = decode(message)
+        clients[client_id] = frame
 
 
 async def main():
