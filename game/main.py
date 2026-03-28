@@ -2,13 +2,15 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
-from flask import Flask, request
-import threading
+from game.server import run_flask
 
 
 async def run_game():
     # Initialize Pygame
     pygame.init()
+
+    # start flask server
+    run_flask()
 
     # screen settings
     screen_width = 1400
@@ -41,21 +43,7 @@ async def run_game():
     running = True
     frame = 0
     fireballs = []
-
-    # running Flask server
-    app = Flask(__name__)
     last_player = None
-
-    @app.route("/api/getResult", methods=["GET"])
-    def get_result():
-        global last_player
-        last_player = request.args.get("player")
-        return "OK"
-
-    def run_flask():
-        app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
-
-    threading.Thread(target=run_flask, daemon=True).start()
 
     while running:
         # Fill the screen with the background image
