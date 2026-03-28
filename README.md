@@ -20,7 +20,12 @@ Cuz eduoram doesn't work properly you connect to localhost through ngrok (it's r
 rm -rf .venv
 uv python install 3.12
 uv python pin 3.12
+export UV_LINK_MODE=copy
 uv sync
+```
+test
+```sh
+uv run python -c "import numpy, cv2, pygame; print('ok')"
 ```
 then
 ```sh

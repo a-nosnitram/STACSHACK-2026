@@ -48,7 +48,7 @@ async def run_game():
 
     # right player position
     right_player_x = screen_width - 350
-    right_player_y = screen_height - 500
+    right_player_y = screen_height - (350 + 32*8)
     right_player_hp = 100
     right_player_name = "yehor"
 
