@@ -125,11 +125,19 @@ async def run_game():
             screen, frame
         )
 
+        # draw_idle(
+        #     "fedor",
+        #     right_player_x + 220,
+        #     left_player_y,
+        #     screen, frame, flipped=True
+        # )
+
         # Draw progress bar
         draw_progress_bar(screen, current_stage, stages, frame)
 
         # Draw HP bars
-        draw_hp_bar(screen, left_player_hp, 40, 25, left_player_name, max_hp=100.0)
+        draw_hp_bar(screen, left_player_hp, 40, 25,
+                    left_player_name, max_hp=100.0)
         draw_hp_bar(
             screen,
             right_player_hp,
@@ -178,12 +186,12 @@ async def run_game():
                         sender="2",
                     )
                 )
-            
+
             # A "round" ends when a winner is decided and an attack is launched.
             rounds_played += 1
             if current_stage < rounds_total:
                 current_stage += 1
-            
+
             if rounds_total > 0 and rounds_played >= rounds_total:
                 # Let the final projectile land, then end the game.
                 end_after_fireballs = True

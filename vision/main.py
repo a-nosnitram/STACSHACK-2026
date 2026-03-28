@@ -45,14 +45,16 @@ hold_ms = 3000
 round_index = 0
 round_start_ms = 0
 match_active = False
-best_scores: dict[int, float] = {}
+total_scores: dict[int, float] = {}
+sample_counts: dict[int, int] = {}
 last_timestamp_ms = 0
 awaiting_players = False
 expected_players = 2
+frame_count = 0
 
 
 async def run_vision():
-    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, best_scores, last_timestamp_ms, awaiting_players
+    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, last_timestamp_ms, awaiting_players, total_scores, sample_counts
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
             now_ms = int((time.monotonic() - start_time) * 1000)
@@ -70,7 +72,8 @@ async def run_vision():
                     round_start_ms = now_ms
                     match_active = True
                     awaiting_players = True
-                    best_scores = {}
+                    total_scores = {}
+                    sample_counts = {}
                     ui_state["recognition_active"] = False
                     print(f"Starting match with poses: {poses}")
                     print(f"Prep: {prep_ms} ms, Hold: {hold_ms} ms")
@@ -114,14 +117,16 @@ async def run_vision():
                             frame, result, current_pose, ui_state
                         )
                         if score is not None:
-                            best_scores[client_id] = max(
-                                best_scores.get(client_id, 0.0), score
-                            )
+                            total_scores[client_id] = total_scores.get(
+                                client_id, 0.0) + score
+                            sample_counts[client_id] = sample_counts.get(
+                                client_id, 0) + 1
                     else:
                         frame, _matched, _score = handle_pose_recognition(
                             frame, result, current_pose, ui_state
                         )
 
+                    # HOLD PHASE
                     phase_text = "Get ready" if in_prep else "Hold pose"
                     time_left_ms = (
                         prep_ms -
@@ -137,6 +142,8 @@ async def run_vision():
                         (255, 255, 0),
                         2,
                     )
+
+                # WAITING
                 elif match_active and poses and awaiting_players:
                     cv2.putText(
                         frame,
@@ -155,27 +162,36 @@ async def run_vision():
                 if len(visible_clients) >= expected_players:
                     awaiting_players = False
                     round_start_ms = now_ms
-                    best_scores = {}
+                    total_scores = {}
+                    sample_counts = {}
 
             if match_active and poses and not awaiting_players:
                 elapsed = now_ms - round_start_ms
                 if elapsed >= (prep_ms + hold_ms):
                     winner = None
-                    if best_scores:
-                        winner = max(best_scores, key=best_scores.get)
+                    avg_scores = {
+                        client_id: (
+                            total_scores[client_id] /
+                            sample_counts.get(client_id, 1)
+                        )
+                        for client_id in total_scores
+                    }
+                    if avg_scores:
+                        winner = max(avg_scores, key=avg_scores.get)
                     await vision_to_game.put(
                         {
                             "type": "round_result",
                             "round": round_index + 1,
                             "pose": poses[round_index],
                             "winner": winner,
-                            "scores": best_scores,
+                            "scores": avg_scores,
                         }
                     )
                     print(
-                        f"Round {round_index + 1} result: winner=Client {winner} with scores {best_scores}")
+                        f"Round {round_index + 1} result: winner=Client {winner} with scores {avg_scores}")
                     round_index += 1
-                    best_scores = {}
+                    total_scores = {}
+                    sample_counts = {}
                     round_start_ms = now_ms
                     if round_index >= len(poses):
                         match_active = False
