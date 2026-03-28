@@ -8,7 +8,7 @@ def draw_idle(character, x, y, screen, frame_idx=0, flipped=False):
     idle_frames = []
     for i in range(1, 3):
         frame = pygame.image.load(
-            f"../assets/sprites/{character}/idle/{i}.bmp").convert_alpha()
+            f"assets/sprites/{character}/idle/{i}.bmp").convert_alpha()
         # scale sprite up
         frame = pygame.transform.scale(
             frame, (frame.get_width() * 8, frame.get_height() * 8))

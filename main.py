@@ -5,6 +5,7 @@ import websockets
 
 from phone_cam.server import process_stream
 from vision.main import run_vision
+from game.main import run_game
 
 
 async def main():
@@ -12,7 +13,7 @@ async def main():
 
     print("Server running...")
 
+    run_game()  # runs pygame loop
     await run_vision()  # runs your mediapipe loop
-
 
 asyncio.run(main())
