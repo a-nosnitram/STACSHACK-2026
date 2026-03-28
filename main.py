@@ -13,7 +13,9 @@ async def main():
 
     print("Server running...")
 
-    run_game()  # runs pygame loop
-    await run_vision()  # runs your mediapipe loop
+    await asyncio.gather(
+        run_vision(),  # runs your mediapipe loop
+        run_game(),  # runs pygame loop
+    )
 
 asyncio.run(main())

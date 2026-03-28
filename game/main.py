@@ -1,36 +1,36 @@
+import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
 
-# Initialize Pygame
-pygame.init()
+async def run_game():
+    # Initialize Pygame
+    pygame.init()
 
-# screen settings
-screen_width = 1400
-screen_height = 700
+    # screen settings
+    screen_width = 1400
+    screen_height = 700
 
-# Set up the game window
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("FireHUI")
+    # Set up the game window
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    pygame.display.set_caption("FireHUI")
 
-background_image = pygame.image.load(
-    "assets/backgrounds/bg-forest.bmp").convert()
-# set the background image to fill the entire window
-background_image = pygame.transform.scale(
-    background_image, (screen_width, screen_height))
+    background_image = pygame.image.load(
+        "assets/backgrounds/bg-forest.bmp").convert()
+    # set the background image to fill the entire window
+    background_image = pygame.transform.scale(
+        background_image, (screen_width, screen_height))
 
-# left player position
-left_player_x = 50
-left_player_y = screen_height - 350
-left_player_name = "soph"
+    # left player position
+    left_player_x = 50
+    left_player_y = screen_height - 350
+    left_player_name = "soph"
 
-# right player position
-right_player_x = screen_width - 350
-right_player_y = screen_height - 350
-right_player_name = "yehor"
+    # right player position
+    right_player_x = screen_width - 350
+    right_player_y = screen_height - 350
+    right_player_name = "yehor"
 
-
-def run_game():
     # Game loop
     clock = pygame.time.Clock()
     running = True
@@ -81,10 +81,11 @@ def run_game():
 
         frame += 1
         clock.tick(60)
+        await asyncio.sleep(0)
 
     # Quit Pygame
     pygame.quit()
 
 
 if __name__ == "__main__":
-    run_game()
+    asyncio.run(run_game())
