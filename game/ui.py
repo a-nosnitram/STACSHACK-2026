@@ -82,3 +82,24 @@ def draw_progress_bar(screen, current_stage, stages, frame):
                 f"Pose: {stage_info['pose']}", True, (255, 255, 255)
             )
             screen.blit(pose_text, (img_x, img_y + img.get_height() + 10))
+
+
+def draw_win_screen(screen, winner):
+    screen_width, screen_height = screen.get_size()
+    font = pygame.font.SysFont(None, 100)
+    text = font.render(f"THE USER {winner.upper()} WON!!!!", True, (255, 255, 0))
+    text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
+    # Draw a background for the text to make it readable
+    bg_rect = text_rect.inflate(20, 20)
+    pygame.draw.rect(screen, (0, 0, 0), bg_rect)
+    screen.blit(text, text_rect)
+
+
+def draw_hp_bars(screen, left_hp, right_hp):
+    screen_width = screen.get_width()
+    # Left player HP
+    pygame.draw.rect(screen, (255, 0, 0), (50, 20, 200, 20))
+    pygame.draw.rect(screen, (0, 255, 0), (50, 20, left_hp * 2, 20))
+    # Right player HP
+    pygame.draw.rect(screen, (255, 0, 0), (screen_width - 250, 20, 200, 20))
+    pygame.draw.rect(screen, (0, 255, 0), (screen_width - 250, 20, right_hp * 2, 20))

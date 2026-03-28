@@ -2,9 +2,28 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
-from game.ui import draw_progress_bar, load_stages
+from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bars
 from shared.bus import game_to_vision, vision_to_game
 from game.menu import run_pose_menu
+
+
+def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
+    if not game_over:
+        if left_hp <= 0:
+            game_over = True
+            winner = right_name
+            left_hp = 0
+            print(f"THE USER {winner.upper()} WON!!!!")
+        elif right_hp <= 0:
+            game_over = True
+            winner = left_name
+            right_hp = 0
+            print(f"THE USER {winner.upper()} WON!!!!")
+
+    if game_over:
+        draw_win_screen(screen, winner)
+
+    return left_hp, right_hp, game_over, winner
 
 
 async def run_game():
@@ -24,21 +43,19 @@ async def run_game():
     selected_poses = run_pose_menu(surface, poses)
 
     # send user-selected settings to vision
-    await game_to_vision.put({
-        "type": "start_match",
-        "poses": selected_poses,
-        "rounds_ms": 3000
-    })
+    await game_to_vision.put(
+        {"type": "start_match", "poses": selected_poses, "rounds_ms": 3000}
+    )
 
     # Set up the game window
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("SUPERPOSITION")
 
-    background_image = pygame.image.load(
-        "assets/backgrounds/bg-forest.bmp").convert()
+    background_image = pygame.image.load("assets/backgrounds/bg-forest.bmp").convert()
     # set the background image to fill the entire window
     background_image = pygame.transform.scale(
-        background_image, (screen_width, screen_height))
+        background_image, (screen_width, screen_height)
+    )
 
     # left player position
     left_player_x = 50
@@ -48,7 +65,7 @@ async def run_game():
 
     # right player position
     right_player_x = screen_width - 350
-    right_player_y = screen_height - (350 + 32*8)
+    right_player_y = screen_height - (350 + 32 * 8)
     right_player_hp = 100
     right_player_name = "yehor"
 
@@ -63,6 +80,8 @@ async def run_game():
     current_stage = 1
 
     last_player = None
+    game_over = False
+    winner = None
 
     while running:
         # Fill the screen with the background image
@@ -70,23 +89,44 @@ async def run_game():
 
         while not vision_to_game.empty():
             msg = await vision_to_game.get()
-            if msg["type"] == "round_result":
+            if msg["type"] == "round_result" and not game_over:
                 last_player = msg["winner"]
 
         # draw idle sprites
-        draw_idle(left_player_name, left_player_x,
-                  left_player_y, screen, frame)
-        draw_idle(right_player_name, right_player_x,
-                  right_player_y, screen, frame, flipped=True)
+        draw_idle(left_player_name, left_player_x, left_player_y, screen, frame)
+        draw_idle(
+            right_player_name,
+            right_player_x,
+            right_player_y,
+            screen,
+            frame,
+            flipped=True,
+        )
 
         # Draw progress bar
         draw_progress_bar(screen, current_stage, stages, frame)
 
+        # Draw HP bars
+        draw_hp_bars(screen, left_player_hp, right_player_hp)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                # Trigger fireballs manually
+                if event.key == pygame.K_SPACE:
+                    last_player = "1"  # Left player attacks
+                elif event.key == pygame.K_RETURN:
+                    last_player = "2"  # Right player attacks
+                
+                if not game_over:
+                    # simulate progression with 'p'
+                    if event.key == pygame.K_p:
+                        current_stage += 1
+                        if current_stage > len(stages):
+                            current_stage = 1  # reset for now
 
-        if last_player is not None:
+        if last_player is not None and not game_over:
             if last_player == "1":
                 fireballs.append(
                     Attack(
@@ -107,20 +147,33 @@ async def run_game():
                         direction=-1,
                     )
                 )
-                # simulate progression with 'p'
-                if event.key == pygame.K_p:
-                    current_stage += 1
-                    if current_stage > len(stages):
-                        current_stage = 1  # reset for now
 
             last_player = None
 
         # update and draw fireballs
         for fireball in fireballs:
             fireball.update()
+            if not fireball.active:
+                if fireball.direction > 0:
+                    right_player_hp -= 20
+                else:
+                    left_player_hp -= 20
             fireball.draw(screen)
         fireballs = [fireball for fireball in fireballs if fireball.active]
+
+        # Check for win condition
+        left_player_hp, right_player_hp, game_over, winner = handle_win_condition(
+            screen,
+            left_player_hp,
+            right_player_hp,
+            left_player_name,
+            right_player_name,
+            game_over,
+            winner,
+        )
+
         pygame.display.flip()
+
 
         frame += 1
         clock.tick(60)
