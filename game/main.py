@@ -3,6 +3,9 @@ import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
 from game.ui import draw_progress_bar, load_stages
+from shared.bus import game_to_vision, vision_to_game
+from game.menu import run_pose_menu
+
 
 async def run_game():
     # Initialize Pygame
@@ -11,6 +14,18 @@ async def run_game():
     # screen settings
     screen_width = 1400
     screen_height = 700
+
+    # call settings
+    surface = pygame.display.set_mode((screen_width, screen_height))
+    poses = ["squat", "kick", "jab", "plank", "bug", "dog"]
+    # selected_poses = await run_pose_menu(surface, poses)
+    selected_poses = ["squat", "kick", "jab"]
+
+    await game_to_vision.put({
+        "type": "start_match",
+        "poses": selected_poses,
+        "rounds_ms": 3000
+    })
 
     # Set up the game window
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -25,11 +40,13 @@ async def run_game():
     # left player position
     left_player_x = 50
     left_player_y = screen_height - 350
+    left_player_hp = 100
     left_player_name = "soph"
 
     # right player position
     right_player_x = screen_width - 350
     right_player_y = screen_height - 350
+    right_player_hp = 100
     right_player_name = "yehor"
 
     # Game loop
@@ -37,14 +54,21 @@ async def run_game():
     running = True
     frame = 0
     fireballs = []
-    
+
     # Initialize stages
     stages = load_stages()
     current_stage = 1
-    
+
+    last_player = None
+
     while running:
         # Fill the screen with the background image
         screen.blit(background_image, (0, 0))
+
+        while not vision_to_game.empty():
+            msg = await vision_to_game.get()
+            if msg["type"] == "round_result":
+                last_player = msg["winner"]
 
         # draw idle sprites
         draw_idle(left_player_name, left_player_x,
@@ -58,33 +82,35 @@ async def run_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            # fiereballs on keypress for now
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    fireballs.append(
-                        Attack(
-                            "fireball",
-                            x=left_player_x + 220,
-                            y=left_player_y + 40,
-                            target_x=right_player_x - 40,
-                            direction=1,
-                        )
+
+        if last_player is not None:
+            if last_player == "1":
+                fireballs.append(
+                    Attack(
+                        "fireball",
+                        x=left_player_x + 220,
+                        y=left_player_y + 40,
+                        target_x=right_player_x - 40,
+                        direction=1,
                     )
-                if event.key == pygame.K_RETURN:
-                    fireballs.append(
-                        Attack(
-                            "fireball",
-                            x=right_player_x - 40,
-                            y=right_player_y + 40,
-                            target_x=left_player_x + 40,
-                            direction=-1,
-                        )
+                )
+            else:
+                fireballs.append(
+                    Attack(
+                        "fireball",
+                        x=right_player_x - 40,
+                        y=right_player_y + 40,
+                        target_x=left_player_x + 40,
+                        direction=-1,
                     )
+                )
                 # simulate progression with 'p'
                 if event.key == pygame.K_p:
                     current_stage += 1
                     if current_stage > len(stages):
-                        current_stage = 1 # reset for now
+                        current_stage = 1  # reset for now
+
+            last_player = None
 
         # update and draw fireballs
         for fireball in fireballs:
