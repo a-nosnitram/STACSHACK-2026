@@ -14,3 +14,15 @@ python -m http.server 8000 # terminal 2
 ```
 
 Cuz eduoram doesn't work properly you connect to localhost through ngrok (it's running on my machine atm): `https://natasha-unannunciative-noninterdependently.ngrok-free.dev`
+
+## If uv doesn't work
+```sh
+rm -rf .venv
+uv python install 3.12
+uv python pin 3.12
+uv sync
+```
+then
+```sh
+uv run python main.py
+```
