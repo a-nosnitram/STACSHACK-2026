@@ -1,13 +1,21 @@
+# vision/main.py
+
 import mediapipe as mp
 import cv2
 import time
 from pathlib import Path
-import pyautogui
-from draw_landmarks import draw_landmarks
+from vision.draw_landmarks import draw_landmarks
+from vision.pose_recognition import (
+    load_poses,
+)
+from vision.capture_pose import handle_countdown_and_capture
+from vision.recognition import handle_pose_recognition
+from vision.state import clients, ui_state
+import asyncio
 
-
-MODEL_PATH = Path(__file__).resolve().parent / \
-    "../models" / "pose_landmarker_heavy.task"
+MODEL_PATH = (
+    Path(__file__).resolve().parent / "../models" / "pose_landmarker_heavy.task"
+)
 
 if not MODEL_PATH.exists():
     raise FileNotFoundError(
@@ -24,41 +32,61 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 # Create a pose landmarker instance with the video mode:
 options = PoseLandmarkerOptions(
     base_options=BaseOptions(model_asset_path=str(MODEL_PATH)),
-    running_mode=VisionRunningMode.VIDEO)
+    running_mode=VisionRunningMode.VIDEO,
+)
 
-cap = cv2.VideoCapture(1)
 start_time = time.monotonic()
 
-# screen_width = pyautogui.size().width
-# screen_height = pyautogui.size().height
+DB_PATH = Path(__file__).resolve().parent / "poses.json"
+db = load_poses(DB_PATH)
 
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, screen_height)
+POSE_NAME = "squat"  # for now
 
-with PoseLandmarker.create_from_options(options) as landmarker:
-    while cap.isOpened():
-        success, frame = cap.read()
-        if not success:
-            print("Ignoring empty camera frame.")
-            continue
+COUNTDOWN_SEC = 5
 
-        frame = cv2.flip(frame, 1)
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-        timestamp_ms = int((time.monotonic() - start_time) * 1000)
+recognition_active = False
 
-        pose_landmarks = landmarker.detect_for_video(mp_image, timestamp_ms)
-        end_time = time.monotonic()
 
-        frame = draw_landmarks(frame, pose_landmarks)
+async def run_vision():
+    with PoseLandmarker.create_from_options(options) as landmarker:
+        while True:
+            now_ms = int((time.monotonic() - start_time) * 1000)
+            if not clients:
+                await asyncio.sleep(0.01)
+                continue
 
-        cv2.putText(frame, f'FPS: {1 / (end_time - start_time):.2f}', (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            for client_id, frame in clients.items():
+                if frame is None:
+                    continue
 
-        cv2.imshow('MediaPipe Pose Landmarker', frame)
+                frame = cv2.flip(frame, 1)
 
-        if cv2.waitKey(5) & 0xFF == 27:
-            break
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
-    cap.release()
-    cv2.destroyAllWindows()
+                timestamp_ms = int((time.monotonic() - start_time) * 1000)
+                result = landmarker.detect_for_video(mp_image, timestamp_ms)
+
+                frame = draw_landmarks(frame, result)
+                frame = handle_countdown_and_capture(
+                    frame, result, now_ms, ui_state, db, POSE_NAME, DB_PATH
+                )
+
+                frame, matched, dist = handle_pose_recognition(
+                    frame, result, db, POSE_NAME, ui_state
+                )
+
+                cv2.imshow(f"Client {client_id}", frame)
+
+            key = cv2.waitKey(5) & 0xFF
+            if key == 27:
+                break
+            if key == ord("c") and not ui_state["countdown_active"]:
+                ui_state["countdown_active"] = True
+                ui_state["countdown_start_ms"] = now_ms
+            if key == ord("r"):
+                ui_state["recognition_active"] = not ui_state["recognition_active"]
+
+            await asyncio.sleep(0)
+
+        cv2.destroyAllWindows()

@@ -9,4 +9,5 @@ dependencies = [
     "pyautogui>=0.9.54",
     "pygame>=2.6.1",
     "screeninfo>=0.8.1",
+    "websockets>=16.0",
 ]
