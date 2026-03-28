@@ -2,6 +2,9 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
+from flask import Flask, request
+import threading
+
 
 async def run_game():
     # Initialize Pygame
@@ -24,11 +27,13 @@ async def run_game():
     # left player position
     left_player_x = 50
     left_player_y = screen_height - 350
+    left_player_hp = 100
     left_player_name = "soph"
 
     # right player position
     right_player_x = screen_width - 350
     right_player_y = screen_height - 350
+    right_player_hp = 100
     right_player_name = "yehor"
 
     # Game loop
@@ -36,6 +41,22 @@ async def run_game():
     running = True
     frame = 0
     fireballs = []
+
+    # running Flask server
+    app = Flask(__name__)
+    last_player = None
+
+    @app.route("/api/getResult", methods=["GET"])
+    def get_result():
+        global last_player
+        last_player = request.args.get("player")
+        return "OK"
+
+    def run_flask():
+        app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+
+    threading.Thread(target=run_flask, daemon=True).start()
+
     while running:
         # Fill the screen with the background image
         screen.blit(background_image, (0, 0))
@@ -49,28 +70,30 @@ async def run_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            # fiereballs on keypress for now
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    fireballs.append(
-                        Attack(
-                            "fireball",
-                            x=left_player_x + 220,
-                            y=left_player_y + 40,
-                            target_x=right_player_x - 40,
-                            direction=1,
-                        )
+
+        if last_player is not None:
+            if last_player == "1":
+                fireballs.append(
+                    Attack(
+                        "fireball",
+                        x=left_player_x + 220,
+                        y=left_player_y + 40,
+                        target_x=right_player_x - 40,
+                        direction=1,
                     )
-                if event.key == pygame.K_RETURN:
-                    fireballs.append(
-                        Attack(
-                            "fireball",
-                            x=right_player_x - 40,
-                            y=right_player_y + 40,
-                            target_x=left_player_x + 40,
-                            direction=-1,
-                        )
+                )
+            else:
+                fireballs.append(
+                    Attack(
+                        "fireball",
+                        x=right_player_x - 40,
+                        y=right_player_y + 40,
+                        target_x=left_player_x + 40,
+                        direction=-1,
                     )
+                )
+
+            last_player = None
 
         # update and draw fireballs
         for fireball in fireballs:
