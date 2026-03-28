@@ -19,7 +19,7 @@ async def run_game():
     surface = pygame.display.set_mode((screen_width, screen_height))
 
     # all the poses that we obviously have implemented so far
-    poses = ["squat", "joppa", "hui", "plank", "bug", "dog"]
+    poses = ["squat", "bear", "plank", "bug", "dog"]
 
     selected_poses = run_pose_menu(surface, poses)
 
@@ -47,7 +47,7 @@ async def run_game():
     # right player position
     right_player_x = screen_width - 350
 
-    right_player_y = screen_height - (350 + 32*8)
+    right_player_y = screen_height - (350 + 32 * 8)
     right_player_hp = 16
     right_player_name = "yehor"
 
