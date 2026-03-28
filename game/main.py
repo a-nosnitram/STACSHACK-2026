@@ -2,9 +2,29 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
-from game.ui import draw_progress_bar, load_stages, draw_hp_bar
+from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bars
 from shared.bus import game_to_vision, vision_to_game
 from game.menu import run_pose_menu
+from game.startScreen import run_start_screen
+
+
+def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
+    if not game_over:
+        if left_hp <= 0:
+            game_over = True
+            winner = right_name
+            left_hp = 0
+            print(f"THE USER {winner.upper()} WON!!!!")
+        elif right_hp <= 0:
+            game_over = True
+            winner = left_name
+            right_hp = 0
+            print(f"THE USER {winner.upper()} WON!!!!")
+
+    if game_over:
+        draw_win_screen(screen, winner)
+
+    return left_hp, right_hp, game_over, winner
 
 
 async def run_game():
@@ -18,8 +38,17 @@ async def run_game():
     # call settings
     surface = pygame.display.set_mode((screen_width, screen_height))
 
+    startscreen_background_image = pygame.image.load(
+        "assets/backgrounds/bg-forest.bmp").convert()
+    # set the background image to fill the entire window
+    startscreen_background_image = pygame.transform.scale(
+        startscreen_background_image, (screen_width, screen_height))
+    
+    # Start screen view
+    run_start_screen(surface, startscreen_background_image)
+
     # all the poses that we obviously have implemented so far
-    poses = ["squat", "bear", "plank", "bug", "dog"]
+    poses = ["squat", "bear", "plank", "bug", "lunge"]
 
     selected_poses = run_pose_menu(surface, poses)
 
@@ -42,14 +71,13 @@ async def run_game():
     # left player position
     left_player_x = 50
     left_player_y = screen_height - 350
-    left_player_hp = 16
+    left_player_hp = 100
     left_player_name = "soph"
 
     # right player position
     right_player_x = screen_width - 350
-
     right_player_y = screen_height - (350 + 32 * 8)
-    right_player_hp = 16
+    right_player_hp = 100
     right_player_name = "yehor"
 
     # Game loop
@@ -63,6 +91,8 @@ async def run_game():
     current_stage = 1
 
     last_player = None
+    game_over = False
+    winner = None
 
     while running:
         # Fill the screen with the background image
@@ -70,7 +100,7 @@ async def run_game():
 
         while not vision_to_game.empty():
             msg = await vision_to_game.get()
-            if msg["type"] == "round_result":
+            if msg["type"] == "round_result" and not game_over:
                 last_player = msg["winner"]
 
         # draw idle sprites
@@ -89,35 +119,24 @@ async def run_game():
         draw_progress_bar(screen, current_stage, stages, frame)
 
         # Draw HP bars
-        draw_hp_bar(screen, left_player_hp, 50, 50, left_player_name)
-        draw_hp_bar(
-            screen,
-            right_player_hp,
-            screen_width - 350,
-            50,
-            right_player_name,
-            flipped=True,
-        )
+        draw_hp_bars(screen, left_player_hp, right_player_hp)
 
-        # Handle all Pygame events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                # Trigger fireballs manually
-                if event.key == pygame.K_SPACE:
-                    last_player = "1"  # Left player attacks
-                elif event.key == pygame.K_RETURN:
-                    last_player = "2"  # Right player attacks
+                # If game is over, any of these keys will exit
+                if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
+                    running = False
+                
+                if not game_over:
+                    # Trigger fireballs manually
+                    if event.key == pygame.K_SPACE:
+                        last_player = "1"  # Left player attacks
+                    elif event.key == pygame.K_RETURN:
+                        last_player = "2"  # Right player attacks
 
-                # Simulate progression with 'p' (Fixed indentation)
-                elif event.key == pygame.K_p:
-                    current_stage += 1
-                    if current_stage > len(stages):
-                        current_stage = 1  # reset for now
-
-        # Handle the fireball spawning logic based on the last_player
-        if last_player is not None:
+        if last_player is not None and not game_over:
             if last_player == "1":
                 fireballs.append(
                     Attack(
@@ -129,7 +148,7 @@ async def run_game():
                         sender="1",
                     )
                 )
-            else:  # Assume "2" or any other player
+            else:
                 fireballs.append(
                     Attack(
                         "fireball",
@@ -140,9 +159,11 @@ async def run_game():
                         sender="2",
                     )
                 )
-
-            # Reset last_player after spawning the fireball
-            last_player = None
+            
+            # Skip to the next pose after launching a fireball
+            current_stage += 1
+            if current_stage > len(stages):
+                current_stage = 1
 
             last_player = None
 
@@ -155,11 +176,23 @@ async def run_game():
             # Check for hit (when it becomes inactive)
             if old_active and not fireball.active:
                 if fireball.sender == "1":
-                    right_player_hp -= 4
+                    right_player_hp -= 25
                 else:
-                    left_player_hp -= 4
+                    left_player_hp -= 25
 
         fireballs = [fireball for fireball in fireballs if fireball.active]
+
+        # Check for win condition
+        left_player_hp, right_player_hp, game_over, winner = handle_win_condition(
+            screen,
+            left_player_hp,
+            right_player_hp,
+            left_player_name,
+            right_player_name,
+            game_over,
+            winner,
+        )
+
         pygame.display.flip()
 
         frame += 1
