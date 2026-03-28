@@ -1,6 +1,7 @@
 from vision.poses.bug import dead_bug_match
 from vision.poses.plank import plank_match
 from vision.poses.squat import squat_match
+from vision.poses.lunge import lunge_match
 
 def match_expected_pose(
     pose_name: str,
@@ -14,4 +15,6 @@ def match_expected_pose(
         return dead_bug_match(live_person_landmarks)
     elif pose_name == "bear":
         return dead_bug_match(live_person_landmarks)
+    elif pose_name == "lunge":
+        return lunge_match(live_person_landmarks)
     return None

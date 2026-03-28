@@ -31,7 +31,7 @@ async def run_game():
 
 
     # all the poses that we obviously have implemented so far
-    poses = ["squat", "bear", "plank", "bug", "dog"]
+    poses = ["squat", "bear", "plank", "bug", "lunge"]
 
     selected_poses = run_pose_menu(surface, poses)
 
