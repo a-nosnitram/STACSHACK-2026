@@ -1,7 +1,5 @@
 # phone-cam/server.py
 
-import asyncio
-import websockets
 import cv2
 import numpy as np
 import base64
