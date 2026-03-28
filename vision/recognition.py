@@ -23,10 +23,12 @@ def handle_pose_recognition(frame, result, pose_name, ui_state):
             if out is None:
                 match_text = f"{pose_name}: not enough usable landmarks"
             else:
-                matched, dist_value = out
-                match_text = f"{pose_name} dist:{dist_value:.3f} " + (
-                    "MATCH" if matched else "NO MATCH"
-                )
+                _matched, match_index = out
+                # match_text = f"{pose_name} dist:{dist_value:.3f} " + (
+                #     "MATCH" if matched else "NO MATCH"
+                # )
+                matched = match_index >= 0.75
+                match_text = f"{pose_name} idx:{match_index:.3f}" + ("MATCH" if matched else "NO MATCH")
 
     # Draw recognition status
     color = (0, 255, 0) if matched else (255, 255, 255)

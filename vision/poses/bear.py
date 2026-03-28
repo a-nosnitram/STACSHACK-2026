@@ -1,3 +1,16 @@
+# vision/poses/bear.py
+# Simple, robust bear pose (quadruped) detector.
+#
+# Checks (minimal but solid):
+# - shoulders stacked over wrists (x alignment)
+# - hips stacked over knees (x alignment)
+# - hip angle ~ 90° (shoulder-hip-knee)
+# - knee angle ~ 90° (hip-knee-ankle)
+# - arms fairly straight (shoulder-elbow-wrist)
+# - torso roughly parallel to floor (shoulder-hip line ~ horizontal)
+#
+# Returns: (matched_bool, match_index_0_to_1)
+
 import math
 
 from vision.pose_utils import (
@@ -23,10 +36,7 @@ from vision.pose_utils import (
 
 
 def _choose_side(lms, p_min=0.5):
-    """
-    Side-view dead bug: pick the side with better confidence for the chain:
-    shoulder, elbow, wrist, hip, knee, ankle.
-    """
+    """Pick L/R based on presence of shoulder, elbow, wrist, hip, knee, ankle."""
     left_ok = (
         presence(get(lms, LS)) >= p_min
         and presence(get(lms, LE)) >= p_min
@@ -70,15 +80,15 @@ def _choose_side(lms, p_min=0.5):
     return "L" if left_score >= right_score else "R"
 
 
-def dead_bug_metrics(normalized_landmarks, *, p_min=0.5):
+def bear_metrics(normalized_landmarks, *, p_min=0.5):
     """
-    Side-view dead bug (lying on back):
-    - torso_flat: shoulder->hip line close to horizontal
-    - knee_angle: angle(hip-knee-ankle) near 90°
-    - hip_angle: angle(shoulder-hip-knee) near 90°
-    - elbow_angle: angle(shoulder-elbow-wrist) near 180° (arm straight)
-    - wrist_dx: |wrist.x - shoulder.x| small (arm stacked up)
-    - wrist_above: (shoulder.y - wrist.y) positive (wrist above shoulder)
+    Returns metrics for the most reliable side:
+      - torso_flat: deg away from horizontal of shoulder->hip (0 = horizontal)
+      - shoulder_wrist_dx: |shoulder.x - wrist.x|
+      - hip_knee_dx: |hip.x - knee.x|
+      - elbow_angle: angle(shoulder-elbow-wrist) (straight ~180)
+      - hip_angle: angle(shoulder-hip-knee) (~90)
+      - knee_angle: angle(hip-knee-ankle) (~90)
     """
     lms = normalized_landmarks
     side = _choose_side(lms, p_min=p_min)
@@ -103,89 +113,84 @@ def dead_bug_metrics(normalized_landmarks, *, p_min=0.5):
     sx, sy = shoulder
     hx, hy = hip
 
-    # Torso flat (same computation as plank): angle to horizontal (0 = perfectly horizontal).
     dx = hx - sx
     dy = hy - sy
     torso_flat = math.degrees(math.atan2(abs(dy), abs(dx) + 1e-9))
 
-    knee_angle = angle_deg(hip, knee, ankle)
-    hip_angle = angle_deg(shoulder, hip, knee)
-    elbow_angle = angle_deg(shoulder, elbow, wrist)
+    shoulder_wrist_dx = abs(shoulder[0] - wrist[0])
+    hip_knee_dx = abs(hip[0] - knee[0])
 
-    wrist_dx = abs(wrist[0] - shoulder[0])
-    wrist_above = shoulder[1] - wrist[1]  # >0 means wrist is above shoulder in image coords
+    elbow_angle = angle_deg(shoulder, elbow, wrist)
+    hip_angle = angle_deg(shoulder, hip, knee)
+    knee_angle = angle_deg(hip, knee, ankle)
 
     return {
         "side": side,
         "torso_flat": torso_flat,
-        "knee_angle": knee_angle,
-        "hip_angle": hip_angle,
+        "shoulder_wrist_dx": shoulder_wrist_dx,
+        "hip_knee_dx": hip_knee_dx,
         "elbow_angle": elbow_angle,
-        "wrist_dx": wrist_dx,
-        "wrist_above": wrist_above,
+        "hip_angle": hip_angle,
+        "knee_angle": knee_angle,
     }
 
 
-def dead_bug_match(
+def bear_match(
     normalized_landmarks,
     *,
     p_min=0.5,
-    torso_flat_max=20.0,
-    knee_angle_target=90.0,
-    knee_angle_err_max=25.0,
+    torso_flat_max=25.0,
+    shoulder_wrist_dx_max=0.18,
+    hip_knee_dx_max=0.20,
+    elbow_angle_min=150.0,
     hip_angle_target=90.0,
-    hip_angle_err_max=30.0,
-    elbow_angle_min=155.0,
-    wrist_dx_max=0.20,
-    wrist_above_min=0.10,
-    # soft ranges for match index
-    torso_flat_soft=10.0,
-    knee_err_soft=15.0,
-    hip_err_soft=20.0,
+    hip_angle_err_max=35.0,
+    knee_angle_target=90.0,
+    knee_angle_err_max=35.0,
+    
+    torso_soft=12.0,
+    stack_soft=0.10,
     elbow_soft=20.0,
-    wrist_dx_soft=0.10,
-    wrist_above_soft=0.08,
+    hip_err_soft=20.0,
+    knee_err_soft=20.0,
 ):
     """
     Returns (matched_bool, match_index_0_to_1).
-
-    Simple constraints (side view):
-    - torso flat-ish
-    - knee and hip angles near 90°
-    - arm straight-ish and stacked up (wrist above shoulder)
     """
-    m = dead_bug_metrics(normalized_landmarks, p_min=p_min)
+    m = bear_metrics(normalized_landmarks, p_min=p_min)
     if m is None:
         return (False, 0.0)
 
-    knee_err = abs(m["knee_angle"] - knee_angle_target)
     hip_err = abs(m["hip_angle"] - hip_angle_target)
-
-    print(f"dead bug metrics: torso_flat={m['torso_flat']:.1f}, knee_angle={m['knee_angle']:.1f}, hip_angle={m['hip_angle']:.1f}, elbow_angle={m['elbow_angle']:.1f}, wrist_dx={m['wrist_dx']:.2f}, wrist_above={m['wrist_above']:.2f}")
+    knee_err = abs(m["knee_angle"] - knee_angle_target)
 
     matched = (
         m["torso_flat"] <= torso_flat_max
-        and knee_err <= knee_angle_err_max
-        and hip_err <= hip_angle_err_max
+        and m["shoulder_wrist_dx"] <= shoulder_wrist_dx_max
+        and m["hip_knee_dx"] <= hip_knee_dx_max
         and m["elbow_angle"] >= elbow_angle_min
-        and m["wrist_dx"] <= wrist_dx_max
-        and m["wrist_above"] >= wrist_above_min
+        and hip_err <= hip_angle_err_max
+        and knee_err <= knee_angle_err_max
     )
 
-    torso_score = score_below(m["torso_flat"], torso_flat_max, torso_flat_soft)
-    knee_score = score_below_abs(knee_err, knee_angle_err_max, knee_err_soft)
+    torso_score = score_below(m["torso_flat"], torso_flat_max, torso_soft)
+    shoulder_stack_score = score_below(m["shoulder_wrist_dx"], shoulder_wrist_dx_max, stack_soft)
+    hip_stack_score = score_below(m["hip_knee_dx"], hip_knee_dx_max, stack_soft)
+
+    elbow_err = 180.0 - m["elbow_angle"]
+    elbow_err_max = 180.0 - elbow_angle_min
+    elbow_score = score_below(elbow_err, elbow_err_max, elbow_soft)
+
     hip_score = score_below_abs(hip_err, hip_angle_err_max, hip_err_soft)
-    elbow_score = score_below(180.0 - m["elbow_angle"], 180.0 - elbow_angle_min, elbow_soft)
-    wrist_dx_score = score_below(m["wrist_dx"], wrist_dx_max, wrist_dx_soft)
-    wrist_up_score = score_below(0.0 - m["wrist_above"], 0.0 - wrist_above_min, wrist_above_soft)
+    knee_score = score_below_abs(knee_err, knee_angle_err_max, knee_err_soft)
 
     match_index = (
-        0.25 * torso_score
-        + 0.20 * knee_score
-        + 0.20 * hip_score
+        0.20 * torso_score
+        + 0.20 * shoulder_stack_score
+        + 0.15 * hip_stack_score
         + 0.15 * elbow_score
-        + 0.10 * wrist_dx_score
-        + 0.10 * wrist_up_score
+        + 0.15 * hip_score
+        + 0.15 * knee_score
     )
 
-    return (matched, match_index)
+    return (matched, float(match_index))
