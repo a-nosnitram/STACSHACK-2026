@@ -5,10 +5,6 @@ import cv2
 import time
 from pathlib import Path
 from vision.draw_landmarks import draw_landmarks
-from vision.pose_recognition import (
-    load_poses,
-)
-from vision.capture_pose import handle_countdown_and_capture
 from vision.recognition import handle_pose_recognition
 from vision.state import clients, ui_state
 import asyncio
@@ -37,8 +33,6 @@ options = PoseLandmarkerOptions(
 
 start_time = time.monotonic()
 
-DB_PATH = Path(__file__).resolve().parent / "poses.json"
-db = load_poses(DB_PATH)
 
 POSE_NAME = "squat"  # for now
 
@@ -68,12 +62,9 @@ async def run_vision():
                 result = landmarker.detect_for_video(mp_image, timestamp_ms)
 
                 frame = draw_landmarks(frame, result)
-                frame = handle_countdown_and_capture(
-                    frame, result, now_ms, ui_state, db, POSE_NAME, DB_PATH
-                )
 
                 frame, matched, dist = handle_pose_recognition(
-                    frame, result, db, POSE_NAME, ui_state
+                    frame, result, POSE_NAME, ui_state
                 )
 
                 cv2.imshow(f"Client {client_id}", frame)

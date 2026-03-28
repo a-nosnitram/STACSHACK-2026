@@ -128,7 +128,7 @@ def squat_metrics(normalized_landmarks, *, p_min=0.5):
         "hip_drop": hip_drop,
     }
 
-
+    
 def squat_match(
     normalized_landmarks,
     *,
