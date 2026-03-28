@@ -125,8 +125,17 @@ def draw_progress_bar(screen, current_stage, stages, frame):
     bar_y = 50
 
     rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
+    
+    # Calculate fill ratio so it reaches the current stage's dot
     completed = max(0, int(current_stage) - 1)
-    fill_ratio = 0.0 if total_stages <= 0 else completed / float(total_stages)
+    if total_stages > 1:
+        t = (max(1, min(current_stage, total_stages)) - 1) / float(total_stages - 1)
+        # The dots are at x = rect.x + 18 + t * (rect.w - 36)
+        # So the fill width should be 18 + t * (rect.w - 36)
+        fill_width = 18 + t * (rect.w - 36)
+        fill_ratio = fill_width / float(bar_width)
+    else:
+        fill_ratio = 1.0 if current_stage >= 1 else 0.0
 
     # Single smooth bar looks cleaner than filling each stage segment.
     _draw_smooth_bar(
