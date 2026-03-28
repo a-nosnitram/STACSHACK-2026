@@ -4,24 +4,29 @@ from sprites import draw_idle
 # Initialize Pygame
 pygame.init()
 
+# screen settings
+screen_width = 1400
+screen_height = 700
+
 # Set up the game window
-screen = pygame.display.set_mode((1400, 700))
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("FireHUI")
 
 background_image = pygame.image.load(
     "../assets/backgrounds/bg-stone.bmp").convert()
 # set the background image to fill the entire window
-background_image = pygame.transform.scale(background_image, (1400, 700))
+background_image = pygame.transform.scale(
+    background_image, (screen_width, screen_height))
 
 
 # left player position
 left_player_x = 50
-left_player_y = 300
+left_player_y = screen_height - 350
 left_player_name = "soph"
 
 # right player position
-right_player_x = 1000
-right_player_y = 300
+right_player_x = screen_width - 350
+right_player_y = screen_height - 350
 right_player_name = "yehor"
 
 # Game loop
