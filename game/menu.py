@@ -42,7 +42,7 @@ def run_pose_menu(
         title_surf = font.render(title, True, (240, 240, 240))
         screen.blit(title_surf, (40, 30))
 
-        hint_text = "Arrows/W-S move | Space toggles | Enter confirms | Esc cancels"
+        hint_text = "Arrows move | Space checks | Enter confirms | Esc cancels"
         hint_surf = small.render(hint_text, True, (180, 180, 180))
         screen.blit(hint_surf, (40, 70))
 

@@ -8,9 +8,11 @@ from vision.draw_landmarks import draw_landmarks
 from vision.recognition import handle_pose_recognition
 from vision.state import clients, ui_state
 import asyncio
+from shared.bus import game_to_vision, vision_to_game
 
 MODEL_PATH = (
-    Path(__file__).resolve().parent / "../models" / "pose_landmarker_heavy.task"
+    Path(__file__).resolve().parent /
+    "../models" / "pose_landmarker_heavy.task"
 )
 
 if not MODEL_PATH.exists():
@@ -45,6 +47,16 @@ async def run_vision():
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
             now_ms = int((time.monotonic() - start_time) * 1000)
+            # read from bus
+            while not game_to_vision.empty():
+                msg = await game_to_vision.get()
+                print(f"Vision received message: {msg}")
+                if msg["type"] == "start_match":
+                    poses = msg["poses"]
+                    print(f"Starting match with poses: {poses}")
+                    coutdown = msg["rounds_ms"] // 1000
+                    print(f"Countdown: {coutdown} seconds")
+
             if not clients:
                 await asyncio.sleep(0.01)
                 continue
@@ -56,7 +68,8 @@ async def run_vision():
                 frame = cv2.flip(frame, 1)
 
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+                mp_image = mp.Image(
+                    image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
                 timestamp_ms = int((time.monotonic() - start_time) * 1000)
                 result = landmarker.detect_for_video(mp_image, timestamp_ms)

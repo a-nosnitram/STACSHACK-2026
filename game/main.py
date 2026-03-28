@@ -17,10 +17,12 @@ async def run_game():
 
     # call settings
     surface = pygame.display.set_mode((screen_width, screen_height))
-    poses = ["squat", "kick", "jab", "plank", "bug", "dog"]
-    # selected_poses = await run_pose_menu(surface, poses)
-    selected_poses = ["squat", "kick", "jab"]
 
+    # all the poses that we obviously have implemented so far
+    poses = ["squat", "joppa", "hui", "plank", "bug", "dog"]
+    selected_poses = run_pose_menu(surface, poses)
+
+    # send user-selected settings to vision
     await game_to_vision.put({
         "type": "start_match",
         "poses": selected_poses,
