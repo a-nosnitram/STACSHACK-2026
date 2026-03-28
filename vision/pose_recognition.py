@@ -1,3 +1,5 @@
+# vision/pose_recognition.py
+
 import json
 import math
 from pathlib import Path
