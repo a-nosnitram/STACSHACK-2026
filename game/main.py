@@ -1,4 +1,5 @@
 import pygame
+from attack import Fireball
 from sprites import draw_idle
 
 # Initialize Pygame
@@ -18,7 +19,6 @@ background_image = pygame.image.load(
 background_image = pygame.transform.scale(
     background_image, (screen_width, screen_height))
 
-
 # left player position
 left_player_x = 50
 left_player_y = screen_height - 350
@@ -33,6 +33,7 @@ right_player_name = "yehor"
 clock = pygame.time.Clock()
 running = True
 frame = 0
+fireballs = []
 
 while running:
     # Fill the screen with the background image
@@ -46,6 +47,32 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        # fiereballs on keypress for now
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                fireballs.append(
+                    Fireball(
+                        x=left_player_x + 220,
+                        y=left_player_y + 40,
+                        target_x=right_player_x - 40,
+                        direction=1,
+                    )
+                )
+            if event.key == pygame.K_RETURN:
+                fireballs.append(
+                    Fireball(
+                        x=right_player_x - 40,
+                        y=right_player_y + 40,
+                        target_x=left_player_x + 40,
+                        direction=-1,
+                    )
+                )
+
+    # update and draw fireballs
+    for fireball in fireballs:
+        fireball.update()
+        fireball.draw(screen)
+    fireballs = [fireball for fireball in fireballs if fireball.active]
     pygame.display.flip()
 
     frame += 1

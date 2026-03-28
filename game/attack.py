@@ -1,26 +1,70 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Tuple
+
 import pygame
 
 
-# sprite attack animation
-# frames 1.bmp and 2.bmp from assets/sprites/{character}/attack/
-def draw_attack(character, x, y, screen, frame_idx=0, flipped=False):
-    attack_frames = []
-    for i in range(1, 3):
-        frame = pygame.image.load(
-            f"../assets/sprites/{character}/attack/{i}.bmp").convert_alpha()
-        # scale sprite up
+_FIREBALL_CACHE: Dict[Tuple[int, bool], List[pygame.Surface]] = {}
+
+
+def _load_fireball_frames(scale: int = 6, flipped: bool = False) -> List[pygame.Surface]:
+    key = (scale, flipped)
+    if key in _FIREBALL_CACHE:
+        return _FIREBALL_CACHE[key]
+
+    base_dir = Path(__file__).resolve().parent.parent / \
+        "assets" / "effects" / "fireball"
+    frames: List[pygame.Surface] = []
+    for i in range(1, 5):
+        path = base_dir / f"{i}.bmp"
+        frame = pygame.image.load(str(path)).convert_alpha()
         frame = pygame.transform.scale(
-            frame, (frame.get_width() * 8, frame.get_height() * 8))
-        attack_frames.append(frame)
+            frame, (frame.get_width() * scale, frame.get_height() * scale)
+        )
+        if flipped:
+            frame = pygame.transform.flip(frame, True, False)
+        frames.append(frame)
 
-    # cycle through attack frames every 10 frames
-    if len(attack_frames) % 10 == 0:
-        frame_idx = (frame_idx) % len(attack_frames)
-    else:
-        frame_idx = (frame_idx // 10) % len(attack_frames)
+    _FIREBALL_CACHE[key] = frames
+    return frames
 
-    if flipped:
-        attack_frames[frame_idx] = pygame.transform.flip(
-            attack_frames[frame_idx], True, False)
 
-    screen.blit(attack_frames[frame_idx], (x, y))
+@dataclass
+class Fireball:
+    x: float
+    y: float
+    target_x: float
+    direction: int
+    speed: float = 12.0
+    frame_interval: int = 4
+    scale: int = 6
+
+    _frame_idx: int = 0
+    _frame_tick: int = 0
+    _frames: List[pygame.Surface] = None
+    active: bool = True
+
+    def __post_init__(self) -> None:
+        flipped = self.direction < 0
+        self._frames = _load_fireball_frames(scale=self.scale, flipped=flipped)
+
+    def update(self) -> None:
+        if not self.active:
+            return
+        self.x += self.speed * self.direction
+        self._frame_tick += 1
+        if self._frame_tick >= self.frame_interval:
+            self._frame_tick = 0
+            self._frame_idx = (self._frame_idx + 1) % len(self._frames)
+
+        if self.direction > 0 and self.x >= self.target_x:
+            self.active = False
+        if self.direction < 0 and self.x <= self.target_x:
+            self.active = False
+
+    def draw(self, screen: pygame.Surface) -> None:
+        if not self.active:
+            return
+        frame = self._frames[self._frame_idx]
+        screen.blit(frame, (int(self.x), int(self.y)))
