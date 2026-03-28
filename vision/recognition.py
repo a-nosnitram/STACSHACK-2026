@@ -27,7 +27,7 @@ def handle_pose_recognition(frame, result, pose_name, ui_state):
                 # match_text = f"{pose_name} dist:{dist_value:.3f} " + (
                 #     "MATCH" if matched else "NO MATCH"
                 # )
-                matched = match_index >= 0.75
+                matched = match_index >= 0.7
                 match_text = f"{pose_name} idx:{match_index:.3f}" + ("MATCH" if matched else "NO MATCH")
 
     # Draw recognition status
