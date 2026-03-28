@@ -117,19 +117,12 @@ async def run_game():
                 if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
                     running = False
                 
-                # Trigger fireballs manually
                 if not game_over:
+                    # Trigger fireballs manually
                     if event.key == pygame.K_SPACE:
                         last_player = "1"  # Left player attacks
                     elif event.key == pygame.K_RETURN:
                         last_player = "2"  # Right player attacks
-                
-                if not game_over:
-                    # simulate progression with 'p'
-                    if event.key == pygame.K_p:
-                        current_stage += 1
-                        if current_stage > len(stages):
-                            current_stage = 1  # reset for now
 
         if last_player is not None and not game_over:
             if last_player == "1":
@@ -152,6 +145,11 @@ async def run_game():
                         direction=-1,
                     )
                 )
+            
+            # Skip to the next pose after launching a fireball
+            current_stage += 1
+            if current_stage > len(stages):
+                current_stage = 1
 
             last_player = None
 
