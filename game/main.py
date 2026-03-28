@@ -1,5 +1,5 @@
 import pygame
-from attack import Fireball
+from attack import Attack
 from sprites import draw_idle
 
 # Initialize Pygame
@@ -51,7 +51,8 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 fireballs.append(
-                    Fireball(
+                    Attack(
+                        "fireball",
                         x=left_player_x + 220,
                         y=left_player_y + 40,
                         target_x=right_player_x - 40,
@@ -60,7 +61,8 @@ while running:
                 )
             if event.key == pygame.K_RETURN:
                 fireballs.append(
-                    Fireball(
+                    Attack(
+                        "fireball",
                         x=right_player_x - 40,
                         y=right_player_y + 40,
                         target_x=left_player_x + 40,

@@ -5,16 +5,16 @@ from typing import Dict, List, Tuple
 import pygame
 
 
-_FIREBALL_CACHE: Dict[Tuple[int, bool], List[pygame.Surface]] = {}
+_ATTACK_CACHE: Dict[Tuple[int, bool], List[pygame.Surface]] = {}
 
 
-def _load_fireball_frames(scale: int = 6, flipped: bool = False) -> List[pygame.Surface]:
+def _load_attack_frames(attack_type: str, scale: int = 6, flipped: bool = False) -> List[pygame.Surface]:
     key = (scale, flipped)
-    if key in _FIREBALL_CACHE:
-        return _FIREBALL_CACHE[key]
+    if key in _ATTACK_CACHE:
+        return _ATTACK_CACHE[key]
 
     base_dir = Path(__file__).resolve().parent.parent / \
-        "assets" / "effects" / "fireball"
+        "assets" / "effects" / attack_type
     frames: List[pygame.Surface] = []
     for i in range(1, 5):
         path = base_dir / f"{i}.bmp"
@@ -26,12 +26,13 @@ def _load_fireball_frames(scale: int = 6, flipped: bool = False) -> List[pygame.
             frame = pygame.transform.flip(frame, True, False)
         frames.append(frame)
 
-    _FIREBALL_CACHE[key] = frames
+    _ATTACK_CACHE[key] = frames
     return frames
 
 
 @dataclass
-class Fireball:
+class Attack:
+    attack_type: str
     x: float
     y: float
     target_x: float
@@ -47,7 +48,8 @@ class Fireball:
 
     def __post_init__(self) -> None:
         flipped = self.direction < 0
-        self._frames = _load_fireball_frames(scale=self.scale, flipped=flipped)
+        self._frames = _load_attack_frames(
+            attack_type=self.attack_type, scale=self.scale, flipped=flipped)
 
     def update(self) -> None:
         if not self.active:
