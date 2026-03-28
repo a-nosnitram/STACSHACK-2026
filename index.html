@@ -4,13 +4,14 @@
 <body>
     <video id="video" autoplay playsinline style="display:none;"></video>
     <canvas id="canvas" width="640" height="480"></canvas>
-    <h1>SOME TEST MESSAGE!</h1>    
+    <h1>SOME TEST MESSAGE!</h1>
+    <script src="config.js"></script>
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        
-        const ws = new WebSocket('wss://brynlee-indiscretionary-unforgetfully.ngrok-free.dev');
+
+        const ws = new WebSocket(window.CONFIG.WS_URL);
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
             .then(stream => { video.srcObject = stream; })
@@ -19,14 +20,14 @@
         ws.onopen = () => console.log("Connected");
         ws.onerror = (e) => console.log("Error", e);
         ws.onclose = () => console.log("Closed");
-        
+
         ws.onopen = () => {
             console.log("Connected to laptop");
             setInterval(() => {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const frameData = canvas.toDataURL('image/jpeg', 0.5); 
+                const frameData = canvas.toDataURL('image/jpeg', 0.5);
                 ws.send(frameData);
-            }, 100); 
+            }, 100);
         };
     </script>
 </body>
