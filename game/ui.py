@@ -86,10 +86,14 @@ def draw_progress_bar(screen, current_stage, stages, frame):
         img_path = stage_info.get("image")
         if os.path.exists(img_path):
             img = pygame.image.load(img_path).convert_alpha()
-            # Scale it a bit
-            img = pygame.transform.scale(
-                img, (img.get_width() * 4, img.get_height() * 4)
-            )
+            
+            # Scale image proportionally to fit within a reasonable size (e.g., 200x200)
+            max_size = 200
+            w, h = img.get_size()
+            scale = min(max_size / w, max_size / h)
+            new_size = (int(w * scale), int(h * scale))
+            img = pygame.transform.scale(img, new_size)
+
             img_x = (screen_width - img.get_width()) // 2
             img_y = bar_y + bar_height + 20
 
