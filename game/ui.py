@@ -191,21 +191,49 @@ def draw_progress_bar(screen, current_stage, stages, frame):
 
 
 def draw_win_screen(screen, winner):
+    pygame.font.init()
     screen_width, screen_height = screen.get_size()
-    font = pygame.font.SysFont(None, 100)
-    text = font.render(f"THE USER {winner.upper()} WON!!!!", True, (255, 255, 0))
-    text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
-    # Draw a background for the text to make it readable
-    bg_rect = text_rect.inflate(20, 20)
-    pygame.draw.rect(screen, (0, 0, 0), bg_rect)
-    screen.blit(text, text_rect)
 
+    # Dim the background
+    overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 170))
+    screen.blit(overlay, (0, 0))
 
-# def draw_hp_bars(screen, left_hp, right_hp):
-#     screen_width = screen.get_width()
-#     # Left player HP
-#     pygame.draw.rect(screen, (255, 0, 0), (50, 20, 200, 20))
-#     pygame.draw.rect(screen, (0, 255, 0), (50, 20, max(0, left_hp) * 2, 20))
-#     # Right player HP
-#     pygame.draw.rect(screen, (255, 0, 0), (screen_width - 250, 20, 200, 20))
-#     pygame.draw.rect(screen, (0, 255, 0), (screen_width - 250, 20, max(0, right_hp) * 2, 20))
+    # Center card
+    card_w, card_h = 760, 260
+    card_rect = pygame.Rect(
+        (screen_width - card_w) // 2,
+        (screen_height - card_h) // 2,
+        card_w,
+        card_h,
+    )
+    _draw_panel(screen, card_rect, fill=(20, 20, 26), outline=(120, 120, 140), radius=22, shadow=True)
+
+    # Title
+    title_font = pygame.font.Font(None, 110)
+    if str(winner).upper() == "TIE":
+        title = "DRAW"
+        title_color = (250, 210, 80)
+    else:
+        title = f"{str(winner).upper()} WINS"
+        title_color = (70, 235, 120)
+
+    title_surf = title_font.render(title, True, title_color)
+    title_rect = title_surf.get_rect(center=(card_rect.centerx, card_rect.y + 95))
+    screen.blit(title_surf, title_rect)
+
+    # Subtitle / hint
+    hint_font = pygame.font.Font(None, 36)
+    hint = "Press ESC / ENTER / SPACE to exit"
+    hint_surf = hint_font.render(hint, True, (230, 230, 240))
+    hint_rect = hint_surf.get_rect(center=(card_rect.centerx, card_rect.y + 175))
+    screen.blit(hint_surf, hint_rect)
+
+    # Small accent line
+    pygame.draw.line(
+        screen,
+        (90, 90, 105),
+        (card_rect.x + 60, card_rect.y + 135),
+        (card_rect.right - 60, card_rect.y + 135),
+        2,
+    )
