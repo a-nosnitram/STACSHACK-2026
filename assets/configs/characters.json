@@ -1,0 +1,24 @@
+{
+  "characters": [
+    {
+      "id": "soph",
+      "name": "Soph",
+      "preview": "assets/characters/soph/preview.bmp"
+    },
+    {
+      "id": "yehor",
+      "name": "Yehor",
+      "preview": "assets/characters/yehor/preview.bmp"
+    },
+    {
+      "id": "nastya",
+      "name": "nastya",
+      "preview": "assets/characters/nastya/preview.bmp"
+    },
+    {
+      "id": "fedya",
+      "name": "fedya",
+      "preview": "assets/characters/fedya/preview.bmp"
+    }
+  ]
+}

@@ -3,22 +3,27 @@
     {
       "number": 1,
       "pose": "squat",
-      "image": "assets/sprites/soph/idle/1.bmp"
+      "image": "assets/poses/squat.png"
     },
     {
       "number": 2,
-      "pose": "squat",
-      "image": "assets/sprites/soph/idle/2.bmp"
+      "pose": "bear",
+      "image": "assets/poses/bear.png"
     },
     {
       "number": 3,
-      "pose": "squat",
-      "image": "assets/sprites/soph/idle/1.bmp"
+      "pose": "dead_bug",
+      "image": "assets/poses/dead_bug.png"
     },
     {
       "number": 4,
-      "pose": "squat",
-      "image": "assets/sprites/soph/idle/2.bmp"
+      "pose": "launge",
+      "image": "assets/poses/launge.png"
+    },
+    {
+      "number": 5,
+      "pose": "plank",
+      "image": "assets/poses/plank.png"
     }
   ]
 }
