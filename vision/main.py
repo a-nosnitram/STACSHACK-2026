@@ -36,8 +36,6 @@ options = PoseLandmarkerOptions(
 start_time = time.monotonic()
 
 
-POSE_NAME = "plank"  # for now
-
 COUNTDOWN_SEC = 5
 
 recognition_active = False
@@ -76,9 +74,10 @@ async def run_vision():
 
                 frame = draw_landmarks(frame, result)
 
-                frame, matched, dist = handle_pose_recognition(
-                    frame, result, POSE_NAME, ui_state
-                )
+                for pose in poses:
+                    frame, matched, dist = handle_pose_recognition(
+                        frame, result, pose, ui_state
+                    )
 
                 cv2.imshow(f"Client {client_id}", frame)
 

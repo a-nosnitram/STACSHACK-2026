@@ -20,6 +20,7 @@ async def run_game():
 
     # all the poses that we obviously have implemented so far
     poses = ["squat", "joppa", "hui", "plank", "bug", "dog"]
+
     selected_poses = run_pose_menu(surface, poses)
 
     # send user-selected settings to vision
@@ -31,7 +32,7 @@ async def run_game():
 
     # Set up the game window
     screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("FireHUI")
+    pygame.display.set_caption("SUPERPOSITION")
 
     background_image = pygame.image.load(
         "assets/backgrounds/bg-forest.bmp").convert()
@@ -47,7 +48,7 @@ async def run_game():
 
     # right player position
     right_player_x = screen_width - 350
-    right_player_y = screen_height - 350
+    right_player_y = screen_height - 500
     right_player_hp = 100
     right_player_name = "yehor"
 
