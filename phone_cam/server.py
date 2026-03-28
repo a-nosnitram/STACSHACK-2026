@@ -31,12 +31,3 @@ async def process_stream(websocket):
     async for message in websocket:
         frame = decode(message)
         clients[client_id] = frame.copy()
-
-
-async def main():
-    async with websockets.serve(process_stream, "0.0.0.0", 8765):
-        print("Server running...")
-        await asyncio.Future()
-
-
-asyncio.run(main())
