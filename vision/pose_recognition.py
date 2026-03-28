@@ -3,7 +3,7 @@
 import json
 import math
 from pathlib import Path
-
+from vision.squat import squat_match 
 import numpy as np
 
 LS, RS = 11, 12  # shoulders
@@ -13,24 +13,64 @@ LH, RH = 23, 24  # hips
 LK, RK = 25, 26  # knees
 LA, RA = 27, 28  # ankles
 
-LANDMARK_NAMES = [
-    "nose",
-    "left_eye_inner", "left_eye", "left_eye_outer",
-    "right_eye_inner", "right_eye", "right_eye_outer",
-    "left_ear", "right_ear",
-    "mouth_left", "mouth_right",
-    "left_shoulder", "right_shoulder",
-    "left_elbow", "right_elbow",
-    "left_wrist", "right_wrist",
-    "left_pinky", "right_pinky",
-    "left_index", "right_index",
-    "left_thumb", "right_thumb",
-    "left_hip", "right_hip",
-    "left_knee", "right_knee",
-    "left_ankle", "right_ankle",
-    "left_heel", "right_heel",
-    "left_foot_index", "right_foot_index",
-]
+
+def get(lms, i):
+    return lms[i]
+
+
+def xy(lm):
+    return float(lm.x), float(lm.y)
+
+
+def presence(lm):
+    return float(getattr(lm, "presence", 1.0))
+
+
+def angle_deg(a, b, c):
+    """Angle ABC (degrees) using 2D points a,b,c = (x,y)."""
+    ax, ay = a
+    bx, by = b
+    cx, cy = c
+
+    ba = (ax - bx, ay - by)
+    bc = (cx - bx, cy - by)
+
+    ba_len = math.hypot(ba[0], ba[1])
+    bc_len = math.hypot(bc[0], bc[1])
+    denom = (ba_len * bc_len) + 1e-9
+
+    cosv = (ba[0] * bc[0] + ba[1] * bc[1]) / denom
+    cosv = max(-1.0, min(1.0, cosv))
+    return math.degrees(math.acos(cosv))
+
+
+def choose_side(lms, p_min=0.5):
+    """
+    Pick left or right leg based on presence of hip/knee/ankle.
+    Returns "L" or "R" or None.
+    """
+    left_ok = (
+        presence(get(lms, LH)) >= p_min
+        and presence(get(lms, LK)) >= p_min
+        and presence(get(lms, LA)) >= p_min
+    )
+    right_ok = (
+        presence(get(lms, RH)) >= p_min
+        and presence(get(lms, RK)) >= p_min
+        and presence(get(lms, RA)) >= p_min
+    )
+
+    if not left_ok and not right_ok:
+        return None
+    if left_ok and not right_ok:
+        return "L"
+    if right_ok and not left_ok:
+        return "R"
+
+    left_score = presence(get(lms, LH)) + presence(get(lms, LK)) + presence(get(lms, LA))
+    right_score = presence(get(lms, RH)) + presence(get(lms, RK)) + presence(get(lms, RA))
+    return "L" if left_score >= right_score else "R"
+
 
 
 
@@ -129,82 +169,16 @@ def capture_pose_template(result, db: dict, pose_name: str, *, path: str | Path,
     save_poses(db, path)
     return True
 
-
 def match_expected_pose(
-    db: dict,
-    pose_name: str,
-    live_person_landmarks,
-    *,
-    p_min: float = 0.7,
-    v_min: float = 0.7,
-    min_points: int = 15,
-    critical_sets: list[set[int]] | None = None,
-    use_z: bool = True,
-) -> tuple[float, int] | None:
-    """
-    Match live pose to expected template.
-
-    Rules:
-    - Only compare landmarks where live presence >= p_min (and visibility >= v_min if provided)
-    - Require at least `min_points` usable landmarks
-    - If `critical_sets` is provided, require at least one set to be fully usable
-
-    Returns: (best_mean_distance, used_landmarks_count) or None.
-    """
-    templates = db.get(pose_name, [])
-    if not templates:
-        return None
-
-    live = extract_template(live_person_landmarks)
-    if live is None:
-        return None
-
-    live_pts = np.asarray(live["points"], dtype=np.float32)  # (33,3)
-    live_presence = live["presence"]
-    live_visibility = live["visibility"]
-
-    usable: set[int] = set()
-    for i in range(33):
-        if live_presence[i] < p_min:
-            continue
-        if v_min is not None and live_visibility[i] < v_min:
-            continue
-        usable.add(i)
-
-    if len(usable) < min_points:
-        return None
-    if critical_sets and not any(s.issubset(usable) for s in critical_sets):
-        return None
-
-    used = sorted(usable)
-    dims = 3 if use_z else 2
-    live_sel = live_pts[used, :dims]
-
-    best = None
-    for t in templates:
-        if not isinstance(t, dict) or "points" not in t:
-            continue
-        t_pts = np.asarray(t["points"], dtype=np.float32)
-        if t_pts.shape != (33, 3):
-            continue
-        t_sel = t_pts[used, :dims]
-        d = float(np.mean(np.linalg.norm(live_sel - t_sel, axis=1)))
-        if best is None or d < best:
-            best = d
-
-    if best is None:
-        return None
-    return best, len(used)
+        pose_name: str,
+        live_person_landmarks,
+) -> None | dict:
+    if pose_name == "squat":
+        return squat_match(live_person_landmarks)
+    return None
 
 
-def squat_critical_sets() -> list[set[int]]:
-    """Either left-side (hip,knee,ankle) or right-side must be usable."""
-    return [{LH, LK, LA}, {RH, RK, RA}]
 
-
-def plank_critical_sets() -> list[set[int]]:
-    """Either left-side (shoulder,hip,ankle) or right-side must be usable."""
-    return [{LS, LH, LA}, {RS, RH, RA}]
 
 
 def _cosine_dist(a: list[float], b: list[float]) -> float:
@@ -212,26 +186,6 @@ def _cosine_dist(a: list[float], b: list[float]) -> float:
     va = np.asarray(a, dtype=np.float32)
     vb = np.asarray(b, dtype=np.float32)
     return float(1.0 - (np.dot(va, vb) / ((np.linalg.norm(va) * np.linalg.norm(vb)) + 1e-9)))
-
-
-def best_match(db: dict, features: list[float]) -> tuple[str, float] | None:
-    """
-    Compare live `features` to all saved samples. Returns (pose_name, distance) or None.
-    """
-    best_name = None
-    best_dist = None
-    for name, samples in db.items():
-        for sample in samples:
-            if len(sample) != len(features):
-                continue
-            d = _cosine_dist(features, sample)
-            if best_dist is None or d < best_dist:
-                best_name, best_dist = name, d
-
-    if best_name is None or best_dist is None:
-        return None
-    return best_name, float(best_dist)
-
 
 
 def print_most_visible_landmarks(result, *, person_index=0, top_k=10, score="visibility"):
