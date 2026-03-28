@@ -113,11 +113,16 @@ async def run_game():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
+                # If game is over, any of these keys will exit
+                if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
+                    running = False
+                
                 # Trigger fireballs manually
-                if event.key == pygame.K_SPACE:
-                    last_player = "1"  # Left player attacks
-                elif event.key == pygame.K_RETURN:
-                    last_player = "2"  # Right player attacks
+                if not game_over:
+                    if event.key == pygame.K_SPACE:
+                        last_player = "1"  # Left player attacks
+                    elif event.key == pygame.K_RETURN:
+                        last_player = "2"  # Right player attacks
                 
                 if not game_over:
                     # simulate progression with 'p'
