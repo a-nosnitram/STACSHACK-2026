@@ -34,7 +34,7 @@ options = PoseLandmarkerOptions(
 start_time = time.monotonic()
 
 
-POSE_NAME = "squat"  # for now
+POSE_NAME = "plank"  # for now
 
 COUNTDOWN_SEC = 5
 

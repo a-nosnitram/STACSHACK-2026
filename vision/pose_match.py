@@ -1,6 +1,7 @@
 # vision/pose_recognition.py
 import math
 from vision.squat import squat_match
+from vision.plank import plank_match
 import numpy as np
 
 LS, RS = 11, 12  # shoulders
@@ -41,37 +42,6 @@ def angle_deg(a, b, c):
     return math.degrees(math.acos(cosv))
 
 
-def choose_side(lms, p_min=0.5):
-    """
-    Pick left or right leg based on presence of hip/knee/ankle.
-    Returns "L" or "R" or None.
-    """
-    left_ok = (
-        presence(get(lms, LH)) >= p_min
-        and presence(get(lms, LK)) >= p_min
-        and presence(get(lms, LA)) >= p_min
-    )
-    right_ok = (
-        presence(get(lms, RH)) >= p_min
-        and presence(get(lms, RK)) >= p_min
-        and presence(get(lms, RA)) >= p_min
-    )
-
-    if not left_ok and not right_ok:
-        return None
-    if left_ok and not right_ok:
-        return "L"
-    if right_ok and not left_ok:
-        return "R"
-
-    left_score = (
-        presence(get(lms, LH)) + presence(get(lms, LK)) + presence(get(lms, LA))
-    )
-    right_score = (
-        presence(get(lms, RH)) + presence(get(lms, RK)) + presence(get(lms, RA))
-    )
-    return "L" if left_score >= right_score else "R"
-
 def clamp01(x: float) -> float:
     return 0.0 if x < 0.0 else 1.0 if x > 1.0 else float(x)
 
@@ -87,10 +57,15 @@ def score_above(value: float, limit: float, soft: float) -> float:
     soft = max(1e-6, float(soft))
     return clamp01((value - limit) / soft)
 
+def score_below_abs(value, limit, soft):
+        return score_below(abs(value), limit, soft)
+
 def match_expected_pose(
     pose_name: str,
     live_person_landmarks,
 ) -> None | dict:
     if pose_name == "squat":
         return squat_match(live_person_landmarks)
+    elif pose_name == "plank":
+        return plank_match(live_person_landmarks)
     return None

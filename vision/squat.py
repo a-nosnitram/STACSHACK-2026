@@ -1,21 +1,44 @@
-"""
-Side-squat detector using angles + a torso (shoulder-hip) constraint.
-
-Input expects normalized landmarks (translation+scale normalized) where each landmark has:
-  - x, y (and optionally z)
-  - presence (recommended)
-
-Best with a SIDE camera view.
-"""
+#vision/squat.py
 
 import math
-from vision.pose_match import angle_deg, choose_side, get, xy, score_above, score_below
+from vision.pose_match import angle_deg, get, xy, score_above, score_below, presence
 
 # MediaPipe indices
 LS, RS = 11, 12
 LH, RH = 23, 24
 LK, RK = 25, 26
 LA, RA = 27, 28
+
+def _choose_side(lms, p_min=0.5):
+    """
+    Pick left or right leg based on presence of hip/knee/ankle.
+    Returns "L" or "R" or None.
+    """
+    left_ok = (
+        presence(get(lms, LH)) >= p_min
+        and presence(get(lms, LK)) >= p_min
+        and presence(get(lms, LA)) >= p_min
+    )
+    right_ok = (
+        presence(get(lms, RH)) >= p_min
+        and presence(get(lms, RK)) >= p_min
+        and presence(get(lms, RA)) >= p_min
+    )
+
+    if not left_ok and not right_ok:
+        return None
+    if left_ok and not right_ok:
+        return "L"
+    if right_ok and not left_ok:
+        return "R"
+
+    left_score = (
+        presence(get(lms, LH)) + presence(get(lms, LK)) + presence(get(lms, LA))
+    )
+    right_score = (
+        presence(get(lms, RH)) + presence(get(lms, RK)) + presence(get(lms, RA))
+    )
+    return "L" if left_score >= right_score else "R"
 
 def squat_metrics(normalized_landmarks, *, p_min=0.5):
     """
