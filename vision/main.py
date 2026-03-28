@@ -4,15 +4,12 @@ import mediapipe as mp
 import cv2
 import time
 from pathlib import Path
-import pyautogui
 from vision.draw_landmarks import draw_landmarks
 from vision.pose_recognition import (
-    capture_pose_template,
     load_poses,
-    match_expected_pose,
-    squat_critical_sets,
 )
-from vision.state import clients
+from vision.capture_pose import handle_countdown_and_capture
+from vision.state import clients, ui_state
 import asyncio
 
 MODEL_PATH = (
@@ -45,13 +42,6 @@ db = load_poses(DB_PATH)
 POSE_NAME = "squat"  # for now
 
 COUNTDOWN_SEC = 5
-countdown_active = False
-countdown_start_ms = 0
-
-saved_banner_active = False
-saved_banner_until_ms = 0
-saved_banner_text = ""
-saved_banner_color = (0, 255, 0)
 
 recognition_active = False
 
@@ -59,6 +49,7 @@ recognition_active = False
 async def run_vision():
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
+            now_ms = int((time.monotonic() - start_time) * 1000)
             if not clients:
                 await asyncio.sleep(0.01)
                 continue
@@ -76,11 +67,17 @@ async def run_vision():
                 result = landmarker.detect_for_video(mp_image, timestamp_ms)
 
                 frame = draw_landmarks(frame, result)
-
+                frame = handle_countdown_and_capture(
+                    frame, result, now_ms, ui_state, db, POSE_NAME, DB_PATH
+                )
                 cv2.imshow(f"Client {client_id}", frame)
 
-            if cv2.waitKey(5) & 0xFF == 27:
+            key = cv2.waitKey(5) & 0xFF
+            if key == 27:
                 break
+            if key == ord("c") and not ui_state["countdown_active"]:
+                ui_state["countdown_active"] = True
+                ui_state["countdown_start_ms"] = now_ms
 
             await asyncio.sleep(0)
 
