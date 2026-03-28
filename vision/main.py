@@ -76,7 +76,7 @@ async def run_vision():
 
                 for pose in poses:
                     frame, matched, dist = handle_pose_recognition(
-                        frame, result, pose, ui_state
+                        frame, result, "bear", ui_state
                     )
 
                 cv2.imshow(f"Client {client_id}", frame)
