@@ -20,6 +20,8 @@ def choose_side(lms, p_min=0.5):
         and presence(get(lms, LK)) >= p_min
         and presence(get(lms, LA)) >= p_min
     )
+
+
     right_ok = (
         presence(get(lms, RH)) >= p_min
         and presence(get(lms, RK)) >= p_min
