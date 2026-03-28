@@ -1,5 +1,5 @@
 import cv2
-from vision.pose_recognition import match_expected_pose, squat_critical_sets
+from vision.pose_recognition import match_expected_pose
 
 
 def handle_pose_recognition(frame, result, db, pose_name, ui_state):
@@ -14,25 +14,35 @@ def handle_pose_recognition(frame, result, db, pose_name, ui_state):
             match_text = f"{pose_name}: (no person)"
         else:
             out = match_expected_pose(
-                db,
                 pose_name,
-                result.pose_landmarks[0],
-                p_min=0.7,
-                v_min=None,
-                min_points=10,
-                critical_sets=squat_critical_sets(),
-                use_z=True,
+                result.pose_landmarks[0],  # MediaPipe Tasks: already a list of 33 landmarks
             )
 
             if out is None:
                 match_text = f"{pose_name}: not enough usable landmarks"
             else:
-                dist, used = out
-                dist_value = dist
-                matched = dist < 0.2  # Tweak this threshold (e.g. 0.15 - 0.3)
-                match_text = f"{pose_name} dist:{dist:.3f} pts:{used}/33 " + (
-                    "MATCH" if matched else ""
-                )
+                matched, dist_value = out
+                match_text = f"{pose_name} dist:{dist_value:.3f} " + ("MATCH" if matched else "NO MATCH")
+            # out = match_expected_pose(
+            #     db,
+            #     pose_name,
+            #     result.pose_landmarks[0],
+            #     p_min=0.7,
+            #     v_min=None,
+            #     min_points=10,
+            #     critical_sets=squat_critical_sets(),
+            #     use_z=True,
+            # )
+
+            # if out is None:
+            #     match_text = f"{pose_name}: not enough usable landmarks"
+            # else:
+            #     dist, used = out
+            #     dist_value = dist
+            #     matched = dist < 0.2  # Tweak this threshold (e.g. 0.15 - 0.3)
+            #     match_text = f"{pose_name} dist:{dist:.3f} pts:{used}/33 " + (
+            #         "MATCH" if matched else ""
+            #     )
 
     # Draw recognition status
     color = (0, 255, 0) if matched else (255, 255, 255)
