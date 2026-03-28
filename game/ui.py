@@ -8,9 +8,9 @@ def load_stages():
         return json.load(f)["stages"]
 
 
-def draw_progress_bar(screen, current_stage, stages):
+def draw_progress_bar(screen, current_stage, stages, frame):
     total_stages = len(stages)
-    screen_width = screen.get_size()
+    screen_width, bar_width = screen.get_size()
 
     # Progress bar dimensions and position
     bar_width = 400
