@@ -7,6 +7,8 @@ LW, RW = 15, 16  # wrists
 LH, RH = 23, 24  # hips
 LK, RK = 25, 26  # knees
 LA, RA = 27, 28  # ankles
+LHEEL, RHEEL = 29, 30  # heels
+LFOOT, RFOOT = 31, 32  # foot index (toes)
 
 
 def get(lms, i):
@@ -57,4 +59,3 @@ def score_above(value: float, limit: float, soft: float) -> float:
 
 def score_below_abs(value: float, limit: float, soft: float) -> float:
     return score_below(abs(value), limit, soft)
-
