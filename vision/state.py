@@ -12,4 +12,5 @@ ui_state = {
     "saved_banner_until_ms": 0,
     "saved_banner_text": "",
     "saved_banner_color": (0, 255, 0),
+    "recognition_active": False,
 }
