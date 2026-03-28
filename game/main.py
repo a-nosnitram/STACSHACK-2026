@@ -2,7 +2,7 @@ import asyncio
 import pygame
 from game.attack import Attack
 from game.sprites import draw_idle
-from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bars
+from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bar
 from shared.bus import game_to_vision, vision_to_game
 from game.menu import run_pose_menu
 from game.startScreen import run_start_screen
@@ -89,6 +89,9 @@ async def run_game():
     # Initialize stages
     stages = load_stages()
     current_stage = 1
+    rounds_total = len(stages)
+    rounds_played = 0
+    end_after_fireballs = False
 
     last_player = None
     game_over = False
@@ -126,7 +129,16 @@ async def run_game():
         draw_progress_bar(screen, current_stage, stages, frame)
 
         # Draw HP bars
-        draw_hp_bars(screen, left_player_hp, right_player_hp)
+        draw_hp_bar(screen, left_player_hp, 40, 25, left_player_name, max_hp=100.0)
+        draw_hp_bar(
+            screen,
+            right_player_hp,
+            screen_width - 40 - 320,
+            25,
+            right_player_name,
+            flipped=True,
+            max_hp=100.0,
+        )
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -166,11 +178,13 @@ async def run_game():
                         sender="2",
                     )
                 )
-
-            # Skip to the next pose after launching a fireball
+            
+            # A "round" ends when a winner is decided and an attack is launched.
+            rounds_played += 1
             current_stage += 1
-            if current_stage > len(stages):
-                current_stage = 1
+            if rounds_total > 0 and rounds_played >= rounds_total:
+                # Let the final projectile land, then end the game.
+                end_after_fireballs = True
 
             last_player = None
 
@@ -199,6 +213,17 @@ async def run_game():
             game_over,
             winner,
         )
+
+        # End the game once all rounds are done and the last projectile has landed.
+        if end_after_fireballs and not game_over and not fireballs:
+            game_over = True
+            if left_player_hp > right_player_hp:
+                winner = left_player_name
+            elif right_player_hp > left_player_hp:
+                winner = right_player_name
+            else:
+                winner = "TIE"
+            draw_win_screen(screen, winner)
 
         pygame.display.flip()
 
