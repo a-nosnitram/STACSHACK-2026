@@ -12,4 +12,6 @@ def match_expected_pose(
         return plank_match(live_person_landmarks)
     elif pose_name == "bug":
         return dead_bug_match(live_person_landmarks)
+    elif pose_name == "bear":
+        return dead_bug_match(live_person_landmarks)
     return None

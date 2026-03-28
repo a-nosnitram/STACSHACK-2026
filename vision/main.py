@@ -55,6 +55,8 @@ async def run_vision():
                     coutdown = msg["rounds_ms"] // 1000
                     print(f"Countdown: {coutdown} seconds")
 
+            # print(f"Clients connected: {len(clients)}")
+
             if not clients:
                 await asyncio.sleep(0.01)
                 continue

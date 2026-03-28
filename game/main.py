@@ -19,7 +19,7 @@ async def run_game():
     surface = pygame.display.set_mode((screen_width, screen_height))
 
     # all the poses that we obviously have implemented so far
-    poses = ["squat", "joppa", "hui", "plank", "bug", "dog"]
+    poses = ["squat", "bear", "hui", "plank", "bug", "dog"]
 
     selected_poses = run_pose_menu(surface, poses)
 

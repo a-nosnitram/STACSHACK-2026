@@ -128,7 +128,6 @@ def dead_bug_metrics(normalized_landmarks, *, p_min=0.5):
 
 def dead_bug_match(
     normalized_landmarks,
-    *,
     p_min=0.5,
     torso_flat_max=20.0,
     knee_angle_target=90.0,
