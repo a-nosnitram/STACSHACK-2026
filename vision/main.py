@@ -47,10 +47,12 @@ round_start_ms = 0
 match_active = False
 best_scores: dict[int, float] = {}
 last_timestamp_ms = 0
+awaiting_players = False
+expected_players = 2
 
 
 async def run_vision():
-    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, best_scores, last_timestamp_ms
+    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, best_scores, last_timestamp_ms, awaiting_players
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
             now_ms = int((time.monotonic() - start_time) * 1000)
@@ -67,6 +69,7 @@ async def run_vision():
                     round_index = 0
                     round_start_ms = now_ms
                     match_active = True
+                    awaiting_players = True
                     best_scores = {}
                     ui_state["recognition_active"] = False
                     print(f"Starting match with poses: {poses}")
@@ -74,14 +77,14 @@ async def run_vision():
                 if msg["type"] == "stop_match":
                     print("Stopping match")
                     match_active = False
+                    awaiting_players = False
                     ui_state["recognition_active"] = False
-
-            # print(f"Clients connected: {len(clients)}")
 
             if not clients:
                 await asyncio.sleep(0.01)
                 continue
 
+            visible_clients: set[int] = set()
             for client_id, frame in list(clients.items()):
                 if frame is None:
                     continue
@@ -96,8 +99,10 @@ async def run_vision():
                 last_timestamp_ms = timestamp_ms
                 result = landmarker.detect_for_video(mp_image, timestamp_ms)
                 frame = draw_landmarks(frame, result)
+                if result.pose_landmarks:
+                    visible_clients.add(client_id)
 
-                if match_active and poses:
+                if match_active and poses and not awaiting_players:
                     elapsed = now_ms - round_start_ms
                     in_prep = elapsed < prep_ms
                     in_hold = prep_ms <= elapsed < (prep_ms + hold_ms)
@@ -132,11 +137,27 @@ async def run_vision():
                         (255, 255, 0),
                         2,
                     )
+                elif match_active and poses and awaiting_players:
+                    cv2.putText(
+                        frame,
+                        f"Waiting for both players ({len(visible_clients)}/{expected_players})",
+                        (30, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8,
+                        (0, 200, 255),
+                        2,
+                    )
 
                 cv2.imshow(f"Client {client_id}", frame)
 
             # handle round timing and results
-            if match_active and poses:
+            if match_active and poses and awaiting_players:
+                if len(visible_clients) >= expected_players:
+                    awaiting_players = False
+                    round_start_ms = now_ms
+                    best_scores = {}
+
+            if match_active and poses and not awaiting_players:
                 elapsed = now_ms - round_start_ms
                 if elapsed >= (prep_ms + hold_ms):
                     winner = None
@@ -151,11 +172,14 @@ async def run_vision():
                             "scores": best_scores,
                         }
                     )
+                    print(
+                        f"Round {round_index + 1} result: winner=Client {winner} with scores {best_scores}")
                     round_index += 1
                     best_scores = {}
                     round_start_ms = now_ms
                     if round_index >= len(poses):
                         match_active = False
+                        awaiting_players = False
                         ui_state["recognition_active"] = False
                         await vision_to_game.put(
                             {"type": "match_complete", "poses": poses}

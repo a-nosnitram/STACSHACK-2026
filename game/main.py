@@ -43,7 +43,7 @@ async def run_game():
     # set the background image to fill the entire window
     startscreen_background_image = pygame.transform.scale(
         startscreen_background_image, (screen_width, screen_height))
-    
+
     # Start screen view
     run_start_screen(surface, startscreen_background_image)
 
@@ -54,7 +54,7 @@ async def run_game():
 
     # send user-selected settings to vision
     await game_to_vision.put(
-        {"type": "start_match", "poses": selected_poses, "rounds_ms": 3000}
+        {"type": "start_match", "poses": selected_poses, "rounds_ms": 5000}
     )
 
     # Set up the game window
@@ -128,7 +128,7 @@ async def run_game():
                 # If game is over, any of these keys will exit
                 if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
                     running = False
-                
+
                 if not game_over:
                     # Trigger fireballs manually
                     if event.key == pygame.K_SPACE:
@@ -159,7 +159,7 @@ async def run_game():
                         sender="2",
                     )
                 )
-            
+
             # Skip to the next pose after launching a fireball
             current_stage += 1
             if current_stage > len(stages):
