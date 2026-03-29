@@ -1,5 +1,6 @@
 import asyncio
 import pygame
+import random
 from game.attack import Attack
 from game.sprites import draw_idle
 from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bar
@@ -8,7 +9,6 @@ from game.menu import run_pose_menu
 from game.startScreen import run_start_screen
 from game.startMenu import run_start_menu
 from game.character_select import run_character_select
-
 
 def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
     if not game_over:
@@ -98,7 +98,8 @@ async def run_game():
                 continue
 
             break
-
+    random.shuffle(selected_poses)
+    selected_poses += random.choices(selected_poses, k=5 - len(selected_poses))
     # send user-selected settings to vision
     await game_to_vision.put(
         {"type": "start_match", "poses": selected_poses, "rounds_ms": 5000}
@@ -164,20 +165,6 @@ async def run_game():
             screen,
             frame,
             flipped=True,
-        )
-
-        draw_idle(
-            "anastasia",
-            left_player_x + 220,
-            left_player_y,
-            screen, frame
-        )
-
-        draw_idle(
-            "fedor",
-            right_player_x - 220,
-            left_player_y,
-            screen, frame, flipped=True
         )
 
         # Draw progress bar

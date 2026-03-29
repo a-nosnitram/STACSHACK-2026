@@ -12,13 +12,13 @@
     },
     {
       "number": 3,
-      "pose": "dead_bug",
-      "image": "assets/poses/dead_bug.png"
+      "pose": "bug",
+      "image": "assets/poses/bug.png"
     },
     {
       "number": 4,
-      "pose": "launge",
-      "image": "assets/poses/launge.png"
+      "pose": "lunge",
+      "image": "assets/poses/lunge.png"
     },
     {
       "number": 5,
