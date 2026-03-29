@@ -144,20 +144,6 @@ async def run_game():
             flipped=True,
         )
 
-        draw_idle(
-            "anastasia",
-            left_player_x + 220,
-            left_player_y,
-            screen, frame
-        )
-
-        draw_idle(
-            "fedor",
-            right_player_x - 220,
-            left_player_y,
-            screen, frame, flipped=True
-        )
-
         # Draw progress bar
         draw_progress_bar(screen, current_stage, stages, frame)
 
