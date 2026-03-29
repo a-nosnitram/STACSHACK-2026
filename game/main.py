@@ -166,6 +166,7 @@ async def run_game():
             elif event.type == pygame.KEYDOWN:
                 # If game is over, any of these keys will exit
                 if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
+                    pygame.quit()
                     running = False
 
                 if not game_over:
