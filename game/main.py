@@ -174,7 +174,7 @@ async def run_game():
                         last_player = "2"  # Right player attacks
 
         if last_player is not None and not game_over:
-            if last_player == "1":
+            if str(last_player) == "1":
                 fireballs.append(
                     Attack(
                         "fireball",
