@@ -36,8 +36,6 @@ options = PoseLandmarkerOptions(
 start_time = time.monotonic()
 
 
-COUNTDOWN_SEC = 5
-
 last_timestamp_ms = 0
 frame_count = 0
 
@@ -78,7 +76,8 @@ async def run_vision():
                 if match.match_active and match.poses and not match.awaiting_players:
                     elapsed = now_ms - match.round_start_ms
                     in_prep = elapsed < match.prep_ms
-                    in_hold = match.prep_ms <= elapsed < (match.prep_ms + match.hold_ms)
+                    in_hold = match.prep_ms <= elapsed < (
+                        match.prep_ms + match.hold_ms)
 
                     ui_state["recognition_active"] = in_hold
                     current_pose = match.poses[match.round_index]
@@ -100,7 +99,8 @@ async def run_vision():
                     phase_text = "Get ready" if in_prep else "Hold pose"
                     time_left_ms = (
                         match.prep_ms -
-                        elapsed if in_prep else (match.prep_ms + match.hold_ms - elapsed)
+                        elapsed if in_prep else (
+                            match.prep_ms + match.hold_ms - elapsed)
                     )
                     time_left = max(0, int(time_left_ms / 1000))
                     cv2.putText(
