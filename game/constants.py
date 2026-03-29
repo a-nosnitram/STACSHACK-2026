@@ -2,7 +2,7 @@
 poses = ["squat", "bear", "plank", "bug", "lunge"]
 
 # screen settings
-screen_width = 1400
+screen_width = 1190
 screen_height = 700
 
 # left player position
