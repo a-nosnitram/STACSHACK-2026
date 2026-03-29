@@ -6,6 +6,27 @@ from game.ui import draw_progress_bar, load_stages, draw_win_screen, draw_hp_bar
 from shared.bus import game_to_vision, vision_to_game
 from game.menu import run_pose_menu
 from game.startScreen import run_start_screen
+from game.startMenu import run_start_menu
+from game.character_select import run_character_select
+
+
+def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
+    if not game_over:
+        if left_hp <= 0:
+            game_over = True
+            winner = right_name
+            left_hp = 0
+            print(f"THE USER {winner.upper()} WON!!!!")
+        elif right_hp <= 0:
+            game_over = True
+            winner = left_name
+            right_hp = 0
+            print(f"THE USER {winner.upper()} WON!!!!")
+
+    if game_over:
+        draw_win_screen(screen, winner)
+
+    return left_hp, right_hp, game_over, winner
 
 
 def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
@@ -39,8 +60,8 @@ async def run_game():
     surface = pygame.display.set_mode((screen_width, screen_height))
 
     startscreen_background_image = pygame.image.load(
-        "assets/backgrounds/bg-forest.bmp").convert()
-    # set the background image to fill the entire window
+        "assets/backgrounds/bg-forest.bmp"
+    ).convert()
     startscreen_background_image = pygame.transform.scale(
         startscreen_background_image, (screen_width, screen_height))
 
@@ -50,7 +71,34 @@ async def run_game():
     # all the poses that we obviously have implemented so far
     poses = ["squat", "bear", "plank", "bug", "lunge"]
 
-    selected_poses = run_pose_menu(surface, poses)
+    # дефолтные персонажи
+    selected_characters = {
+        "left": "soph",
+        "right": "yehor",
+    }
+
+    # Главное меню
+    while True:
+        menu_result = run_start_menu(surface, startscreen_background_image)
+
+        if menu_result == "exit":
+            pygame.quit()
+            return
+
+        elif menu_result == "character":
+            result = run_character_select(surface, startscreen_background_image)
+            if result is not None:
+                selected_characters = result
+            # после выбора персонажей просто возвращаемся в главное меню
+            continue
+
+        elif menu_result == "start":
+            selected_poses = run_pose_menu(surface, poses)
+
+            if selected_poses is None:
+                continue
+
+            break
 
     # send user-selected settings to vision
     await game_to_vision.put(
@@ -72,13 +120,13 @@ async def run_game():
     left_player_x = 50
     left_player_y = screen_height - 350
     left_player_hp = 100
-    left_player_name = "soph"
+    left_player_name = selected_characters["left"]
 
     # right player position
     right_player_x = screen_width - 350
     right_player_y = screen_height - (350 + 32 * 8)
     right_player_hp = 100
-    right_player_name = "yehor"
+    right_player_name = selected_characters["right"]
 
     # Game loop
     clock = pygame.time.Clock()
@@ -89,6 +137,7 @@ async def run_game():
     # Initialize stages
     stages = load_stages()
     current_stage = 1
+
     rounds_total = len(stages)
     rounds_played = 0
     end_after_fireballs = False
