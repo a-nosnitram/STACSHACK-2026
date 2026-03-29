@@ -138,16 +138,18 @@ async def run_game():
                     last_player = str(winner)
 
         # draw idle sprites
-        draw_idle(left_player_name, left_player_x,
-                  left_player_y, screen, frame)
-        draw_idle(
-            right_player_name,
-            right_player_x,
-            right_player_y,
-            screen,
-            frame,
-            flipped=True,
-        )
+        if left_player_name == "yehor":
+            draw_idle(left_player_name, left_player_x,
+                    screen_height - (350 + 32 * 8), screen, frame)
+        else:
+            draw_idle(left_player_name, left_player_x,
+                    left_player_y, screen, frame)
+        if right_player_name == "yehor":
+            draw_idle(right_player_name, right_player_x,
+                    screen_height - (350 + 32 * 8), screen, frame, flipped=True)
+        else:
+            draw_idle(right_player_name, right_player_x,
+                    right_player_y, screen, frame, flipped=True)
 
         # Draw progress bar
         draw_progress_bar(

@@ -28,4 +28,5 @@ async def process_stream(websocket):
 
     async for message in websocket:
         frame = decode(message)
+        frame = cv2.resize(frame, (0, 0), fx=0.5, fy=1)
         clients[client_id] = frame.copy()
