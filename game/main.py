@@ -8,25 +8,8 @@ from game.menu import run_pose_menu
 from game.startScreen import run_start_screen
 from game.startMenu import run_start_menu
 from game.character_select import run_character_select
-
-
-def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
-    if not game_over:
-        if left_hp <= 0:
-            game_over = True
-            winner = right_name
-            left_hp = 0
-            print(f"THE USER {winner.upper()} WON!!!!")
-        elif right_hp <= 0:
-            game_over = True
-            winner = left_name
-            right_hp = 0
-            print(f"THE USER {winner.upper()} WON!!!!")
-
-    if game_over:
-        draw_win_screen(screen, winner)
-
-    return left_hp, right_hp, game_over, winner
+from game.constants import poses, screen_width, screen_height
+from game.utils import pose_combo
 
 
 def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
@@ -52,10 +35,6 @@ async def run_game():
     # Initialize Pygame
     pygame.init()
 
-    # screen settings
-    screen_width = 1400
-    screen_height = 700
-
     # call settings
     surface = pygame.display.set_mode((screen_width, screen_height))
 
@@ -68,16 +47,11 @@ async def run_game():
     # Start screen view
     run_start_screen(surface, startscreen_background_image)
 
-    # all the poses that we obviously have implemented so far
-    poses = ["squat", "bear", "plank", "bug", "lunge"]
-
-    # дефолтные персонажи
     selected_characters = {
         "left": "soph",
         "right": "yehor",
     }
-
-    # Главное меню
+   # Главное меню
     while True:
         menu_result = run_start_menu(surface, startscreen_background_image)
 
@@ -86,19 +60,23 @@ async def run_game():
             return
 
         elif menu_result == "character":
-            result = run_character_select(surface, startscreen_background_image)
+            result = run_character_select(
+                surface, startscreen_background_image)
             if result is not None:
                 selected_characters = result
             # после выбора персонажей просто возвращаемся в главное меню
             continue
 
         elif menu_result == "start":
-            selected_poses = run_pose_menu(surface, poses, startscreen_background_image)
+            selected_poses = run_pose_menu(
+                surface, poses, startscreen_background_image)
             if selected_poses == []:
                 continue
 
             break
 
+    # send 5 poses regardles of how many the user actually selected, filling the rest with random
+    selected_poses = pose_combo(selected_poses)
     # send user-selected settings to vision
     await game_to_vision.put(
         {"type": "start_match", "poses": selected_poses, "rounds_ms": 5000}
