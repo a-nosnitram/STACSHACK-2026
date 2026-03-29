@@ -39,7 +39,7 @@ async def run_game():
     surface = pygame.display.set_mode((screen_width, screen_height))
 
     startscreen_background_image = pygame.image.load(
-        "assets/backgrounds/bg-forest.bmp"
+        "assets/backgrounds/bg-shrine-simple.png"
     ).convert()
     startscreen_background_image = pygame.transform.scale(
         startscreen_background_image, (screen_width, screen_height))
@@ -88,7 +88,7 @@ async def run_game():
     pygame.display.set_caption("SUPERPOSITION")
 
     background_image = pygame.image.load(
-        "assets/backgrounds/bg-forest.bmp").convert()
+        "assets/backgrounds/bg-shrine.png").convert()
     # set the background image to fill the entire window
     background_image = pygame.transform.scale(
         background_image, (screen_width, screen_height)
@@ -140,16 +140,16 @@ async def run_game():
         # draw idle sprites
         if left_player_name == "yehor":
             draw_idle(left_player_name, left_player_x,
-                    screen_height - (350 + 32 * 8), screen, frame)
+                      screen_height - (350 + 32 * 8), screen, frame)
         else:
             draw_idle(left_player_name, left_player_x,
-                    left_player_y, screen, frame)
+                      left_player_y, screen, frame)
         if right_player_name == "yehor":
             draw_idle(right_player_name, right_player_x,
-                    screen_height - (350 + 32 * 8), screen, frame, flipped=True)
+                      screen_height - (350 + 32 * 8), screen, frame, flipped=True)
         else:
             draw_idle(right_player_name, right_player_x,
-                    right_player_y, screen, frame, flipped=True)
+                      right_player_y, screen, frame, flipped=True)
 
         # Draw progress bar
         draw_progress_bar(
