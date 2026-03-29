@@ -36,7 +36,8 @@ def _draw_panel(
 ):
     """Rounded panel with subtle shadow + outline."""
     if shadow:
-        shadow_surf = pygame.Surface((rect.w + 10, rect.h + 10), pygame.SRCALPHA)
+        shadow_surf = pygame.Surface(
+            (rect.w + 10, rect.h + 10), pygame.SRCALPHA)
         pygame.draw.rect(
             shadow_surf,
             (0, 0, 0, 90),
@@ -61,10 +62,12 @@ def _draw_smooth_bar(
 ):
     """Rounded bar with padding + gloss highlight."""
     ratio = _clamp01(ratio)
-    _draw_panel(screen, rect, fill=track_color, outline=(85, 85, 98), radius=radius, shadow=True)
+    _draw_panel(screen, rect, fill=track_color, outline=(
+        85, 85, 98), radius=radius, shadow=True)
 
     pad = 4
-    inner = pygame.Rect(rect.x + pad, rect.y + pad, rect.w - 2 * pad, rect.h - 2 * pad)
+    inner = pygame.Rect(rect.x + pad, rect.y + pad,
+                        rect.w - 2 * pad, rect.h - 2 * pad)
     inner_radius = max(0, radius - pad)
 
     fill_w = int(inner.w * ratio)
@@ -98,11 +101,13 @@ def draw_hp_bar(screen, hp, x, y, name, flipped=False, max_hp=100.0):
 
     rect = pygame.Rect(int(x), int(y), 320, 34)
     fill = _lerp_color((240, 70, 70), (70, 235, 120), ratio)  # red -> green
-    _draw_smooth_bar(screen, rect, ratio=ratio, fill_color=fill, radius=14, flipped=flipped)
+    _draw_smooth_bar(screen, rect, ratio=ratio,
+                     fill_color=fill, radius=14, flipped=flipped)
 
     # Label inside the bar (avoids overlapping the progress bar at the top).
     font = pygame.font.Font(None, 22)
-    label = font.render(f"{name}  {int(hp)}/{int(max_hp)}", True, (245, 245, 250))
+    label = font.render(
+        f"{name}  {int(hp)}/{int(max_hp)}", True, (245, 245, 250))
     label_y = rect.y + (rect.h - label.get_height()) // 2
     if flipped:
         label_x = rect.right - label.get_width() - 10
@@ -125,11 +130,12 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
     bar_y = 50
 
     rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
-    
+
     # Calculate fill ratio so it reaches the current stage's dot
     completed = max(0, int(current_stage) - 1)
     if total_stages > 1:
-        t = (max(1, min(current_stage, total_stages)) - 1) / float(total_stages - 1)
+        t = (max(1, min(current_stage, total_stages)) - 1) / \
+            float(total_stages - 1)
         # The dots are at x = rect.x + 18 + t * (rect.w - 36)
         # So the fill width should be 18 + t * (rect.w - 36)
         fill_width = 18 + t * (rect.w - 36)
@@ -178,7 +184,7 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
         img_path = stages.get(stage_info)
         if os.path.exists(img_path):
             img = pygame.image.load(img_path).convert_alpha()
-            
+
             # Scale image proportionally to fit within a reasonable size (e.g., 200x200)
             max_size = 200
             w, h = img.get_size()
@@ -190,13 +196,18 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
             img_y = bar_y + bar_height + 20
 
             # Draw a nicer frame for the image
-            frame_rect = pygame.Rect(img_x - 8, img_y - 8, img.get_width() + 16, img.get_height() + 16)
-            _draw_panel(screen, frame_rect, fill=(18, 18, 22), outline=(120, 120, 135), radius=14, shadow=True)
+            frame_rect = pygame.Rect(
+                img_x - 8, img_y - 8, img.get_width() + 16, img.get_height() + 16)
+            _draw_panel(screen, frame_rect, fill=(18, 18, 22),
+                        outline=(120, 120, 135), radius=14, shadow=True)
             screen.blit(img, (img_x, img_y))
 
             # Draw pose name
-            pose_text = font.render(f"Pose: {stage_info}", True, (245, 245, 250))
-            screen.blit(pose_text, (img_x, img_y + img.get_height() + 12))
+            # set font
+            font = pygame.font.Font("assets/fonts/Silkscreen-Regular.ttf", 26)
+            pose_text = font.render(
+                f"{stage_info}", True, (245, 245, 250))
+            screen.blit(pose_text, (img_x + 50, img_y + img.get_height() + 12))
 
 
 def draw_win_screen(screen, winner):
@@ -216,7 +227,8 @@ def draw_win_screen(screen, winner):
         card_w,
         card_h,
     )
-    _draw_panel(screen, card_rect, fill=(20, 20, 26), outline=(120, 120, 140), radius=22, shadow=True)
+    _draw_panel(screen, card_rect, fill=(20, 20, 26),
+                outline=(120, 120, 140), radius=22, shadow=True)
 
     # Title
     title_font = pygame.font.Font(None, 110)
@@ -228,14 +240,16 @@ def draw_win_screen(screen, winner):
         title_color = (70, 235, 120)
 
     title_surf = title_font.render(title, True, title_color)
-    title_rect = title_surf.get_rect(center=(card_rect.centerx, card_rect.y + 95))
+    title_rect = title_surf.get_rect(
+        center=(card_rect.centerx, card_rect.y + 95))
     screen.blit(title_surf, title_rect)
 
     # Subtitle / hint
     hint_font = pygame.font.Font(None, 36)
     hint = "Press ESC / ENTER / SPACE to exit"
     hint_surf = hint_font.render(hint, True, (230, 230, 240))
-    hint_rect = hint_surf.get_rect(center=(card_rect.centerx, card_rect.y + 175))
+    hint_rect = hint_surf.get_rect(
+        center=(card_rect.centerx, card_rect.y + 175))
     screen.blit(hint_surf, hint_rect)
 
     # Small accent line
