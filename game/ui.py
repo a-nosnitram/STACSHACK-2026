@@ -5,7 +5,7 @@ import os
 
 def load_stages():
     with open("game/stages.json", "r") as f:
-        return json.load(f)["stages"]
+        return json.load(f)
 
 
 def _clamp01(x: float) -> float:
@@ -111,10 +111,10 @@ def draw_hp_bar(screen, hp, x, y, name, flipped=False, max_hp=100.0):
     screen.blit(label, (label_x, label_y))
 
 
-def draw_progress_bar(screen, current_stage, stages, frame):
+def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
     pygame.font.init()
 
-    total_stages = len(stages)
+    total_stages = len(selected_poses)
     screen_width, _ = screen.get_size()
 
     # Progress bar dimensions and position
@@ -174,8 +174,8 @@ def draw_progress_bar(screen, current_stage, stages, frame):
 
     # Draw "position picture" for the current stage
     if current_stage <= total_stages:
-        stage_info = stages[min(current_stage - 1, total_stages - 1)]
-        img_path = stage_info.get("image")
+        stage_info = selected_poses[min(current_stage - 1, total_stages - 1)]
+        img_path = stages.get(stage_info)
         if os.path.exists(img_path):
             img = pygame.image.load(img_path).convert_alpha()
             
@@ -195,7 +195,7 @@ def draw_progress_bar(screen, current_stage, stages, frame):
             screen.blit(img, (img_x, img_y))
 
             # Draw pose name
-            pose_text = font.render(f"Pose: {stage_info['pose']}", True, (245, 245, 250))
+            pose_text = font.render(f"Pose: {stage_info}", True, (245, 245, 250))
             screen.blit(pose_text, (img_x, img_y + img.get_height() + 12))
 
 

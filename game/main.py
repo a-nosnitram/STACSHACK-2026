@@ -142,7 +142,7 @@ async def run_game():
         )
 
         # Draw progress bar
-        draw_progress_bar(screen, current_stage, stages, frame)
+        draw_progress_bar(screen, current_stage, stages, selected_poses, frame)
 
         # Draw HP bars
         draw_hp_bar(screen, left_hp, 40, 25,
@@ -163,6 +163,7 @@ async def run_game():
             elif event.type == pygame.KEYDOWN:
                 # If game is over, any of these keys will exit
                 if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
+                    pygame.quit()
                     running = False
 
                 if not game_over:
