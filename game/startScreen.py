@@ -11,7 +11,6 @@ def run_start_screen(screen: pygame.Surface, background):
     pygame.font.init()
 
     screen_width, screen_height = screen.get_size()
-    title_font = pygame.font.Font("assets/fonts/Silkscreen-Regular.ttf", 56)
     font = pygame.font.Font("assets/fonts/Silkscreen-Regular.ttf", 28)
 
     running = True
@@ -19,17 +18,19 @@ def run_start_screen(screen: pygame.Surface, background):
     while running:
         screen.blit(background, (0, 0))
 
-        # Title (draw every frame so it isn't overwritten by the background blit)
-        title = title_font.render("SUPERPOSITION", True, (245, 245, 250))
-        # subtle shadow for readability
-        shadow = title_font.render("SUPERPOSITION", True, (0, 0, 0))
-        title_pos = (screen_width // 2, 220)
-        screen.blit(shadow, shadow.get_rect(center=(title_pos[0] + 3, title_pos[1] + 3)))
-        screen.blit(title, title.get_rect(center=title_pos))
+        logo = pygame.image.load("assets/logo/logo1-bg.png").convert_alpha()
+        # scale to preserve aspect ratio and fit within a 600x600 box
+        logo_width, logo_height = logo.get_size()
+        scale_factor = min(600 / logo_width, 600 / logo_height)
+        logo = pygame.transform.scale(
+            logo, (int(logo_width * scale_factor), int(logo_height * scale_factor)))
+        screen.blit(logo, logo.get_rect(center=(screen_width // 2, 200)))
 
         # Prompt
-        text = font.render("PRESS ANY BUTTON TO CONTINUE", True, (255, 255, 255))
-        screen.blit(text, text.get_rect(center=(screen_width // 2, screen_height - 80)))
+        text = font.render("PRESS ANY BUTTON TO CONTINUE",
+                           True, (255, 255, 255))
+        screen.blit(text, text.get_rect(
+            center=(screen_width // 2, screen_height - 80)))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return []

@@ -92,16 +92,20 @@ def run_start_menu(screen: pygame.Surface, background):
         screen.blit(background, (0, 0))
 
         # Dim background for readability
-        overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+        overlay = pygame.Surface(
+            (screen_width, screen_height), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 95))
         screen.blit(overlay, (0, 0))
 
         # Title
-        title = title_font.render("SUPERPOSITION", True, (245, 245, 250))
-        screen.blit(title, title.get_rect(center=(screen_width // 2, 260)))
-
-        # hint = hint_font.render("Mouse or ↑↓ + Enter | Esc exits", True, (190, 190, 205))
-        # screen.blit(hint, hint.get_rect(center=(screen_width // 2, 305)))
+        # render logo1-bg.png with transparent bg and green-grey fill
+        logo = pygame.image.load("assets/logo/logo1-bg.png").convert_alpha()
+        # scale to preserve aspect ratio and fit within a 600x600 box
+        logo_width, logo_height = logo.get_size()
+        scale_factor = min(600 / logo_width, 600 / logo_height)
+        logo = pygame.transform.scale(
+            logo, (int(logo_width * scale_factor), int(logo_height * scale_factor)))
+        screen.blit(logo, logo.get_rect(center=(screen_width // 2, 200)))
 
         # draw buttons
         for i, (key, rect, label) in enumerate(buttons):
