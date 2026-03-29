@@ -20,9 +20,9 @@ ui_state = {
 class MatchState:
     def __init__(self):
         self.poses: List[str] = []
-        self.round_ms: int = 7000
-        self.prep_ms: int = 7000
-        self.hold_ms: int = 3000
+        self.round_ms: int = 10000
+        self.prep_ms: int = 10000
+        self.hold_ms: int = 5000
         self.round_index: int = 0
         self.round_start_ms: int = 0
         self.match_active: bool = False

@@ -45,13 +45,15 @@ def run_character_select(screen: pygame.Surface, background):
     selected_left = 0
     selected_right = 1
 
-    left_panel = pygame.Rect(40, 90, screen_width // 2 - 60, screen_height - 180)
+    left_panel = pygame.Rect(40, 90, screen_width //
+                             2 - 60, screen_height - 180)
     right_panel = pygame.Rect(
         screen_width // 2 + 20, 90, screen_width // 2 - 60, screen_height - 180
     )
 
     back_button = pygame.Rect(30, 25, 120, 40)
-    confirm_button = pygame.Rect(screen_width // 2 - 100, screen_height - 70, 200, 42)
+    confirm_button = pygame.Rect(
+        screen_width // 2 - 100, screen_height - 70, 200, 42)
 
     card_width = 170
     card_height = 180
@@ -65,8 +67,10 @@ def run_character_select(screen: pygame.Surface, background):
 
         return [
             pygame.Rect(start_x, start_y, card_width, card_height),
-            pygame.Rect(start_x + card_width + gap_x, start_y, card_width, card_height),
-            pygame.Rect(start_x, start_y + card_height + gap_y, card_width, card_height),
+            pygame.Rect(start_x + card_width + gap_x,
+                        start_y, card_width, card_height),
+            pygame.Rect(start_x, start_y + card_height +
+                        gap_y, card_width, card_height),
             pygame.Rect(
                 start_x + card_width + gap_x,
                 start_y + card_height + gap_y,
@@ -77,6 +81,9 @@ def run_character_select(screen: pygame.Surface, background):
 
     left_cards = make_card_rects(left_panel)
     right_cards = make_card_rects(right_panel)
+    dark_overlay = pygame.Surface((screen_width, screen_height))
+    dark_overlay.set_alpha(120)
+    dark_overlay.fill((0, 0, 0))
 
     def draw_button(rect, text, mouse_pos):
         fill = (95, 95, 95) if rect.collidepoint(mouse_pos) else (40, 40, 40)
@@ -98,7 +105,8 @@ def run_character_select(screen: pygame.Surface, background):
         preview_rect = preview.get_rect(center=(rect.centerx, rect.y + 62))
         screen.blit(preview, preview_rect)
 
-        name_text = label_font.render(char_data["name"].upper(), True, (255, 255, 255))
+        name_text = label_font.render(
+            char_data["name"].upper(), True, (255, 255, 255))
         name_rect = name_text.get_rect(center=(rect.centerx, rect.bottom - 30))
         screen.blit(name_text, name_rect)
 
@@ -107,15 +115,15 @@ def run_character_select(screen: pygame.Surface, background):
 
         screen.blit(background, (0, 0))
 
-        dark_overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
-        dark_overlay.fill((0, 0, 0, 120))
         screen.blit(dark_overlay, (0, 0))
 
         pygame.draw.rect(screen, (25, 25, 25), left_panel, border_radius=12)
-        pygame.draw.rect(screen, (255, 255, 255), left_panel, 2, border_radius=12)
+        pygame.draw.rect(screen, (255, 255, 255),
+                         left_panel, 2, border_radius=12)
 
         pygame.draw.rect(screen, (25, 25, 25), right_panel, border_radius=12)
-        pygame.draw.rect(screen, (255, 255, 255), right_panel, 2, border_radius=12)
+        pygame.draw.rect(screen, (255, 255, 255),
+                         right_panel, 2, border_radius=12)
 
         title = title_font.render("CHOOSE CHARACTERS", True, (255, 255, 255))
         screen.blit(title, title.get_rect(center=(screen_width // 2, 45)))
@@ -123,15 +131,18 @@ def run_character_select(screen: pygame.Surface, background):
         left_label = label_font.render("PLAYER 1", True, (255, 255, 255))
         right_label = label_font.render("PLAYER 2", True, (255, 255, 255))
 
-        screen.blit(left_label, left_label.get_rect(center=(left_panel.centerx, left_panel.y + 30)))
-        screen.blit(right_label, right_label.get_rect(center=(right_panel.centerx, right_panel.y + 30)))
+        screen.blit(left_label, left_label.get_rect(
+            center=(left_panel.centerx, left_panel.y + 30)))
+        screen.blit(right_label, right_label.get_rect(
+            center=(right_panel.centerx, right_panel.y + 30)))
 
         help_text = small_font.render(
             "LEFT: WASD   RIGHT: ARROWS   ENTER: CONFIRM   ESC: BACK",
             True,
             (220, 220, 220),
         )
-        screen.blit(help_text, help_text.get_rect(center=(screen_width // 2, screen_height - 100)))
+        screen.blit(help_text, help_text.get_rect(
+            center=(screen_width // 2, screen_height - 625)))
 
         for i, rect in enumerate(left_cards):
             draw_card(

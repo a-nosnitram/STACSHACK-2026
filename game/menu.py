@@ -70,7 +70,8 @@ def run_pose_menu(
     grid_start_y = 140
 
     back_button = pygame.Rect(30, 25, 120, 42)
-    start_button = pygame.Rect(screen_width // 2 - 110, screen_height - 70, 220, 44)
+    start_button = pygame.Rect(
+        screen_width // 2 - 110, screen_height - 70, 220, 44)
 
     pose_images = {
         pose_name: load_pose_image(pose_name, image_size)
@@ -90,7 +91,8 @@ def run_pose_menu(
             border = (120, 120, 120)
             text_color = (150, 150, 150)
         else:
-            fill = (95, 95, 95) if rect.collidepoint(mouse_pos) else (40, 40, 40)
+            fill = (95, 95, 95) if rect.collidepoint(
+                mouse_pos) else (40, 40, 40)
             border = (255, 255, 255)
             text_color = (255, 255, 255)
 
@@ -98,22 +100,33 @@ def run_pose_menu(
         pygame.draw.rect(screen, border, rect, 2, border_radius=8)
 
         text_surface = label_font.render(text, True, text_color)
+        text_shadow = label_font.render(text, True, (10, 10, 14))
         text_rect = text_surface.get_rect(center=rect.center)
+        screen.blit(text_shadow, text_rect.move(2, 2))
         screen.blit(text_surface, text_rect)
 
     while True:
         screen.blit(background, (0, 0))
 
+        title_shadow = title_font.render(title, True, (10, 10, 14))
         title_surf = title_font.render(title, True, (240, 240, 240))
-        screen.blit(title_surf, title_surf.get_rect(center=(screen_width // 2, 35)))
+        title_rect = title_surf.get_rect(center=(screen_width // 2, 35))
+        screen.blit(title_shadow, title_rect.move(2, 2))
+        screen.blit(title_surf, title_rect)
 
         hint_text = "ARROWS/WASD MOVE   SPACE/CLICK SELECT   ENTER OR START TO CONFIRM"
-        hint_surf = small_font.render(hint_text, True, (180, 180, 180))
-        screen.blit(hint_surf, hint_surf.get_rect(center=(screen_width // 2, 72)))
+        hint_shadow = small_font.render(hint_text, True, (10, 10, 14))
+        hint_surf = small_font.render(hint_text, True, (245, 245, 245))
+        hint_rect = hint_surf.get_rect(center=(screen_width // 2, 72))
+        screen.blit(hint_shadow, hint_rect.move(2, 2))
+        screen.blit(hint_surf, hint_rect)
 
         count_text = f"SELECTED: {len(selected)}/{max_select}"
-        count_surf = label_font.render(count_text, True, (200, 200, 240))
-        screen.blit(count_surf, count_surf.get_rect(center=(screen_width // 2, 102)))
+        count_shadow = label_font.render(count_text, True, (10, 10, 14))
+        count_surf = label_font.render(count_text, True, (245, 245, 245))
+        count_rect = count_surf.get_rect(center=(screen_width // 2, 102))
+        screen.blit(count_shadow, count_rect.move(2, 2))
+        screen.blit(count_surf, count_rect)
 
         mouse_pos = pygame.mouse.get_pos()
 
@@ -140,16 +153,24 @@ def run_pose_menu(
             image_rect = image.get_rect(center=(rect.centerx, rect.y + 70))
             screen.blit(image, image_rect)
 
-            name_surf = label_font.render(pose_name.upper(), True, (230, 230, 230))
-            name_rect = name_surf.get_rect(center=(rect.centerx, rect.bottom - 28))
+            name_surf = label_font.render(
+                pose_name.upper(), True, (230, 230, 230))
+            name_shadow = label_font.render(
+                pose_name.upper(), True, (10, 10, 14))
+            name_rect = name_surf.get_rect(
+                center=(rect.centerx, rect.bottom - 28))
+            screen.blit(name_shadow, name_rect.move(2, 2))
             screen.blit(name_surf, name_rect)
 
             mark = "[X]" if is_selected else "[ ]"
             mark_surf = small_font.render(mark, True, border_color)
+            mark_shadow = small_font.render(mark, True, (10, 10, 14))
+            screen.blit(mark_shadow, (rect.x + 12, rect.y + 12))
             screen.blit(mark_surf, (rect.x + 10, rect.y + 10))
 
         draw_button(back_button, "BACK", mouse_pos, enabled=True)
-        draw_button(start_button, "START", mouse_pos, enabled=len(selected) > 0)
+        draw_button(start_button, "START", mouse_pos,
+                    enabled=len(selected) > 0)
 
         pygame.display.flip()
         clock.tick(60)
