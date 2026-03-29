@@ -6,13 +6,13 @@ import time
 from pathlib import Path
 from vision.draw_landmarks import draw_landmarks
 from vision.recognition import handle_pose_recognition
-from vision.state import clients, ui_state
+from vision.state import clients, ui_state, match
 import asyncio
 from shared.bus import game_to_vision, vision_to_game
 
 MODEL_PATH = (
     Path(__file__).resolve().parent /
-    "../models" / "pose_landmarker_lite.task"
+    "../models" / "pose_landmarker_heavy.task"
 )
 
 if not MODEL_PATH.exists():
@@ -38,23 +38,12 @@ start_time = time.monotonic()
 
 COUNTDOWN_SEC = 5
 
-poses: list[str] = []
-round_ms = 3000
-prep_ms = 3000
-hold_ms = 3000
-round_index = 0
-round_start_ms = 0
-match_active = False
-total_scores: dict[int, float] = {}
-sample_counts: dict[int, int] = {}
 last_timestamp_ms = 0
-awaiting_players = False
-expected_players = 2
 frame_count = 0
 
 
 async def run_vision():
-    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, last_timestamp_ms, awaiting_players, total_scores, sample_counts
+    global last_timestamp_ms
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
             now_ms = int((time.monotonic() - start_time) * 1000)
@@ -62,26 +51,7 @@ async def run_vision():
             while not game_to_vision.empty():
                 msg = await game_to_vision.get()
                 print(f"Vision received message: {msg}")
-                if msg["type"] == "start_match":
-                    poses = list(msg["poses"])
-                    round_ms = int(
-                        msg.get("rounds_ms", msg.get("round_ms", 3000)))
-                    prep_ms = round_ms
-                    hold_ms = round_ms
-                    round_index = 0
-                    round_start_ms = now_ms
-                    match_active = True
-                    awaiting_players = True
-                    total_scores = {}
-                    sample_counts = {}
-                    ui_state["recognition_active"] = False
-                    print(f"Starting match with poses: {poses}")
-                    print(f"Prep: {prep_ms} ms, Hold: {hold_ms} ms")
-                if msg["type"] == "stop_match":
-                    print("Stopping match")
-                    match_active = False
-                    awaiting_players = False
-                    ui_state["recognition_active"] = False
+                match.handle_message(msg, now_ms)
 
             if not clients:
                 await asyncio.sleep(0.01)
@@ -105,21 +75,21 @@ async def run_vision():
                 if result.pose_landmarks:
                     visible_clients.add(client_id)
 
-                if match_active and poses and not awaiting_players:
-                    elapsed = now_ms - round_start_ms
-                    in_prep = elapsed < prep_ms
-                    in_hold = prep_ms <= elapsed < (prep_ms + hold_ms)
+                if match.match_active and match.poses and not match.awaiting_players:
+                    elapsed = now_ms - match.round_start_ms
+                    in_prep = elapsed < match.prep_ms
+                    in_hold = match.prep_ms <= elapsed < (match.prep_ms + match.hold_ms)
 
                     ui_state["recognition_active"] = in_hold
-                    current_pose = poses[round_index]
+                    current_pose = match.poses[match.round_index]
                     if in_hold:
                         frame, matched, score = handle_pose_recognition(
                             frame, result, current_pose, ui_state
                         )
                         if score is not None:
-                            total_scores[client_id] = total_scores.get(
+                            match.total_scores[client_id] = match.total_scores.get(
                                 client_id, 0.0) + score
-                            sample_counts[client_id] = sample_counts.get(
+                            match.sample_counts[client_id] = match.sample_counts.get(
                                 client_id, 0) + 1
                     else:
                         frame, _matched, _score = handle_pose_recognition(
@@ -129,8 +99,8 @@ async def run_vision():
                     # HOLD PHASE
                     phase_text = "Get ready" if in_prep else "Hold pose"
                     time_left_ms = (
-                        prep_ms -
-                        elapsed if in_prep else (prep_ms + hold_ms - elapsed)
+                        match.prep_ms -
+                        elapsed if in_prep else (match.prep_ms + match.hold_ms - elapsed)
                     )
                     time_left = max(0, int(time_left_ms / 1000))
                     cv2.putText(
@@ -144,10 +114,10 @@ async def run_vision():
                     )
 
                 # WAITING
-                elif match_active and poses and awaiting_players:
+                elif match.match_active and match.poses and match.awaiting_players:
                     cv2.putText(
                         frame,
-                        f"Waiting for both players ({len(visible_clients)}/{expected_players})",
+                        f"Waiting for both players ({len(visible_clients)}/{match.expected_players})",
                         (30, 40),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.8,
@@ -158,47 +128,47 @@ async def run_vision():
                 cv2.imshow(f"Client {client_id}", frame)
 
             # handle round timing and results
-            if match_active and poses and awaiting_players:
-                if len(visible_clients) >= expected_players:
-                    awaiting_players = False
-                    round_start_ms = now_ms
-                    total_scores = {}
-                    sample_counts = {}
+            if match.match_active and match.poses and match.awaiting_players:
+                if len(visible_clients) >= match.expected_players:
+                    match.awaiting_players = False
+                    match.round_start_ms = now_ms
+                    match.total_scores = {}
+                    match.sample_counts = {}
 
-            if match_active and poses and not awaiting_players:
-                elapsed = now_ms - round_start_ms
-                if elapsed >= (prep_ms + hold_ms):
+            if match.match_active and match.poses and not match.awaiting_players:
+                elapsed = now_ms - match.round_start_ms
+                if elapsed >= (match.prep_ms + match.hold_ms):
                     winner = None
                     avg_scores = {
                         client_id: (
-                            total_scores[client_id] /
-                            sample_counts.get(client_id, 1)
+                            match.total_scores[client_id] /
+                            match.sample_counts.get(client_id, 1)
                         )
-                        for client_id in total_scores
+                        for client_id in match.total_scores
                     }
                     if avg_scores:
                         winner = max(avg_scores, key=avg_scores.get)
                     await vision_to_game.put(
                         {
                             "type": "round_result",
-                            "round": round_index + 1,
-                            "pose": poses[round_index],
+                            "round": match.round_index + 1,
+                            "pose": match.poses[match.round_index],
                             "winner": winner,
                             "scores": avg_scores,
                         }
                     )
                     print(
-                        f"Round {round_index + 1} result: winner=Client {winner} with scores {avg_scores}")
-                    round_index += 1
-                    total_scores = {}
-                    sample_counts = {}
-                    round_start_ms = now_ms
-                    if round_index >= len(poses):
-                        match_active = False
-                        awaiting_players = False
+                        f"Round {match.round_index + 1} result: winner=Client {winner} with scores {avg_scores}")
+                    match.round_index += 1
+                    match.total_scores = {}
+                    match.sample_counts = {}
+                    match.round_start_ms = now_ms
+                    if match.round_index >= len(match.poses):
+                        match.match_active = False
+                        match.awaiting_players = False
                         ui_state["recognition_active"] = False
                         await vision_to_game.put(
-                            {"type": "match_complete", "poses": poses}
+                            {"type": "match_complete", "poses": match.poses}
                         )
 
             key = cv2.waitKey(5) & 0xFF
