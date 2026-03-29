@@ -10,7 +10,10 @@ from vision.state import clients, ui_state
 import asyncio
 from shared.bus import game_to_vision, vision_to_game
 
-MODEL_PATH = Path(__file__).resolve().parent / "../models" / "pose_landmarker_lite.task"
+MODEL_PATH = (
+    Path(__file__).resolve().parent /
+    "../models" / "pose_landmarker_lite.task"
+)
 
 if not MODEL_PATH.exists():
     raise FileNotFoundError(
