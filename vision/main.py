@@ -103,14 +103,15 @@ async def run_vision():
                             match.prep_ms + match.hold_ms - elapsed)
                     )
                     time_left = max(0, int(time_left_ms / 1000))
+                    colour = (0, 0, 255) if in_prep else (255, 0, 0)
                     cv2.putText(
                         frame,
                         f"{phase_text}: {current_pose} ({time_left}s)",
                         (30, 40),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.8,
-                        (255, 255, 0),
-                        2,
+                        colour,
+                        3,
                     )
 
                 # WAITING
