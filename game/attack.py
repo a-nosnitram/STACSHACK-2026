@@ -37,7 +37,7 @@ class Attack:
     target_x: float
     direction: int
     sender: str = None
-    speed: float = 12.0
+    speed: float = 20.0
     frame_interval: int = 4
     scale: int = 6
 
