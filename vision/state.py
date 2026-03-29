@@ -34,8 +34,7 @@ class MatchState:
     def handle_message(self, msg: dict, now_ms: int):
         if msg["type"] == "start_match":
             self.poses = list(msg["poses"])
-            self.round_ms = int(
-                msg.get("rounds_ms", msg.get("round_ms", 7000)))
+            self.round_ms = self.round_ms
             self.prep_ms = self.round_ms
             self.hold_ms = self.round_ms
             self.round_index = 0
