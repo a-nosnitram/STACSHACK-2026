@@ -248,13 +248,14 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
 def draw_win_screen(screen, winner):
     pygame.font.init()
     screen_width, screen_height = screen.get_size()
+    font_path = os.path.join("assets", "fonts", "Silkscreen-Regular.ttf")
 
     # Dim the background
     overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 170))
     screen.blit(overlay, (0, 0))
 
-    # Center card
+    # Center card (pixelated)
     card_w, card_h = 760, 260
     card_rect = pygame.Rect(
         (screen_width - card_w) // 2,
@@ -262,11 +263,14 @@ def draw_win_screen(screen, winner):
         card_w,
         card_h,
     )
-    _draw_panel(screen, card_rect, fill=(20, 20, 26),
-                outline=(120, 120, 140), radius=22, shadow=True)
+    shadow_rect = card_rect.move(8, 8)
+    pygame.draw.rect(screen, (0, 0, 0, 120), shadow_rect)
+    pygame.draw.rect(screen, (20, 20, 26), card_rect)
+    pygame.draw.rect(screen, (140, 140, 160), card_rect, width=4)
+    pygame.draw.rect(screen, (80, 80, 95), card_rect.inflate(-8, -8), width=2)
 
     # Title
-    title_font = pygame.font.Font(None, 110)
+    title_font = pygame.font.Font(font_path, 64)
     if str(winner).upper() == "TIE":
         title = "DRAW"
         title_color = (250, 210, 80)
@@ -277,14 +281,18 @@ def draw_win_screen(screen, winner):
     title_surf = title_font.render(title, True, title_color)
     title_rect = title_surf.get_rect(
         center=(card_rect.centerx, card_rect.y + 95))
+    title_shadow = title_font.render(title, True, (10, 10, 14))
+    screen.blit(title_shadow, title_rect.move(3, 3))
     screen.blit(title_surf, title_rect)
 
     # Subtitle / hint
-    hint_font = pygame.font.Font(None, 36)
-    hint = "Press ESC / ENTER / SPACE to exit"
+    hint_font = pygame.font.Font(font_path, 22)
+    hint = "PRESS ESC / ENTER / SPACE TO EXIT"
     hint_surf = hint_font.render(hint, True, (230, 230, 240))
     hint_rect = hint_surf.get_rect(
         center=(card_rect.centerx, card_rect.y + 175))
+    hint_shadow = hint_font.render(hint, True, (10, 10, 14))
+    screen.blit(hint_shadow, hint_rect.move(2, 2))
     screen.blit(hint_surf, hint_rect)
 
     # Small accent line
@@ -293,5 +301,5 @@ def draw_win_screen(screen, winner):
         (90, 90, 105),
         (card_rect.x + 60, card_rect.y + 135),
         (card_rect.right - 60, card_rect.y + 135),
-        2,
+        4,
     )
