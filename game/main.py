@@ -77,9 +77,10 @@ async def run_game():
 
     # send 5 poses regardles of how many the user actually selected, filling the rest with random
     selected_poses = pose_combo(selected_poses)
+    selected_poses_for_match = list(selected_poses)
     # send user-selected settings to vision
     await game_to_vision.put(
-        {"type": "start_match", "poses": selected_poses, "rounds_ms": 5000}
+        {"type": "start_match", "poses": selected_poses_for_match, "rounds_ms": 5000}
     )
 
     # Set up the game window
@@ -112,7 +113,7 @@ async def run_game():
     stages = load_stages()
     current_stage = 1
 
-    rounds_total = len(stages)
+    rounds_total = len(selected_poses_for_match)
     rounds_played = 0
     end_after_fireballs = False
 
@@ -127,7 +128,14 @@ async def run_game():
         while not vision_to_game.empty():
             msg = await vision_to_game.get()
             if msg["type"] == "round_result" and not game_over:
-                last_player = msg["winner"]
+                current_stage = int(msg.get("round", current_stage))
+                winner = msg.get("winner")
+                if winner is None:
+                    last_player = None
+                elif isinstance(winner, int):
+                    last_player = "1" if winner == 0 else "2"
+                else:
+                    last_player = str(winner)
 
         # draw idle sprites
         draw_idle(left_player_name, left_player_x,
@@ -142,7 +150,9 @@ async def run_game():
         )
 
         # Draw progress bar
-        draw_progress_bar(screen, current_stage, stages, selected_poses, frame)
+        draw_progress_bar(
+            screen, current_stage, stages, selected_poses_for_match, frame
+        )
 
         # Draw HP bars
         draw_hp_bar(screen, left_hp, 40, 25,
