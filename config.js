@@ -1,3 +1,3 @@
 window.CONFIG = {
-  WS_URL: "wss://nonreflected-triatomically-tony.ngrok-free.dev",
+  WS_URL: "wss://brynlee-indiscretionary-unforgetfully.ngrok-free.dev",
 };

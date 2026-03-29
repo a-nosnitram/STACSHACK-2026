@@ -10,26 +10,9 @@ from game.startMenu import run_start_menu
 from game.character_select import run_character_select
 
 
-def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
-    if not game_over:
-        if left_hp <= 0:
-            game_over = True
-            winner = right_name
-            left_hp = 0
-            print(f"THE USER {winner.upper()} WON!!!!")
-        elif right_hp <= 0:
-            game_over = True
-            winner = left_name
-            right_hp = 0
-            print(f"THE USER {winner.upper()} WON!!!!")
-
-    if game_over:
-        draw_win_screen(screen, winner)
-
-    return left_hp, right_hp, game_over, winner
-
-
-def handle_win_condition(screen, left_hp, right_hp, left_name, right_name, game_over, winner):
+def handle_win_condition(
+    screen, left_hp, right_hp, left_name, right_name, game_over, winner
+):
     if not game_over:
         if left_hp <= 0:
             game_over = True
@@ -63,7 +46,8 @@ async def run_game():
         "assets/backgrounds/bg-forest.bmp"
     ).convert()
     startscreen_background_image = pygame.transform.scale(
-        startscreen_background_image, (screen_width, screen_height))
+        startscreen_background_image, (screen_width, screen_height)
+    )
 
     # Start screen view
     run_start_screen(surface, startscreen_background_image)
@@ -102,15 +86,14 @@ async def run_game():
 
     # send user-selected settings to vision
     await game_to_vision.put(
-        {"type": "start_match", "poses": selected_poses, "rounds_ms": 5000}
+        {"type": "start_match", "poses": selected_poses, "rounds_ms": 15000}
     )
 
     # Set up the game window
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("SUPERPOSITION")
 
-    background_image = pygame.image.load(
-        "assets/backgrounds/bg-forest.bmp").convert()
+    background_image = pygame.image.load("assets/backgrounds/bg-forest.bmp").convert()
     # set the background image to fill the entire window
     background_image = pygame.transform.scale(
         background_image, (screen_width, screen_height)
@@ -156,8 +139,7 @@ async def run_game():
                 last_player = msg["winner"]
 
         # draw idle sprites
-        draw_idle(left_player_name, left_player_x,
-                  left_player_y, screen, frame)
+        draw_idle(left_player_name, left_player_x, left_player_y, screen, frame)
         draw_idle(
             right_player_name,
             right_player_x,
@@ -167,12 +149,7 @@ async def run_game():
             flipped=True,
         )
 
-        draw_idle(
-            "anastasia",
-            left_player_x + 220,
-            left_player_y,
-            screen, frame
-        )
+        draw_idle("anastasia", left_player_x + 220, left_player_y, screen, frame)
 
         # draw_idle(
         #     "fedor",
@@ -185,8 +162,7 @@ async def run_game():
         draw_progress_bar(screen, current_stage, stages, frame)
 
         # Draw HP bars
-        draw_hp_bar(screen, left_player_hp, 40, 25,
-                    left_player_name, max_hp=100.0)
+        draw_hp_bar(screen, left_player_hp, 40, 25, left_player_name, max_hp=100.0)
         draw_hp_bar(
             screen,
             right_player_hp,
@@ -202,7 +178,11 @@ async def run_game():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 # If game is over, any of these keys will exit
-                if game_over and event.key in [pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE]:
+                if game_over and event.key in [
+                    pygame.K_ESCAPE,
+                    pygame.K_RETURN,
+                    pygame.K_SPACE,
+                ]:
                     running = False
 
                 if not game_over:

@@ -10,10 +10,7 @@ from vision.state import clients, ui_state
 import asyncio
 from shared.bus import game_to_vision, vision_to_game
 
-MODEL_PATH = (
-    Path(__file__).resolve().parent /
-    "../models" / "pose_landmarker_heavy.task"
-)
+MODEL_PATH = Path(__file__).resolve().parent / "../models" / "pose_landmarker_lite.task"
 
 if not MODEL_PATH.exists():
     raise FileNotFoundError(
@@ -39,9 +36,9 @@ start_time = time.monotonic()
 COUNTDOWN_SEC = 5
 
 poses: list[str] = []
-round_ms = 3000
-prep_ms = 3000
-hold_ms = 3000
+round_ms = 15000
+prep_ms = 15000
+hold_ms = 15000
 round_index = 0
 round_start_ms = 0
 match_active = False
@@ -54,7 +51,18 @@ frame_count = 0
 
 
 async def run_vision():
-    global poses, round_ms, prep_ms, hold_ms, round_index, round_start_ms, match_active, last_timestamp_ms, awaiting_players, total_scores, sample_counts
+    global \
+        poses, \
+        round_ms, \
+        prep_ms, \
+        hold_ms, \
+        round_index, \
+        round_start_ms, \
+        match_active, \
+        last_timestamp_ms, \
+        awaiting_players, \
+        total_scores, \
+        sample_counts
     with PoseLandmarker.create_from_options(options) as landmarker:
         while True:
             now_ms = int((time.monotonic() - start_time) * 1000)
@@ -64,8 +72,7 @@ async def run_vision():
                 print(f"Vision received message: {msg}")
                 if msg["type"] == "start_match":
                     poses = list(msg["poses"])
-                    round_ms = int(
-                        msg.get("rounds_ms", msg.get("round_ms", 3000)))
+                    round_ms = int(msg.get("rounds_ms", msg.get("round_ms", 3000)))
                     prep_ms = round_ms
                     hold_ms = round_ms
                     round_index = 0
@@ -88,6 +95,7 @@ async def run_vision():
                 continue
 
             visible_clients: set[int] = set()
+            any_client_hit = False
             for client_id, frame in list(clients.items()):
                 if frame is None:
                     continue
@@ -95,13 +103,13 @@ async def run_vision():
                 frame = cv2.flip(frame, 1)
 
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                mp_image = mp.Image(
-                    image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
                 timestamp_ms = max(now_ms, last_timestamp_ms + 1)
                 last_timestamp_ms = timestamp_ms
                 result = landmarker.detect_for_video(mp_image, timestamp_ms)
                 frame = draw_landmarks(frame, result)
+
                 if result.pose_landmarks:
                     visible_clients.add(client_id)
 
@@ -110,27 +118,26 @@ async def run_vision():
                     in_prep = elapsed < prep_ms
                     in_hold = prep_ms <= elapsed < (prep_ms + hold_ms)
 
-                    ui_state["recognition_active"] = in_hold
+                    # Recognition is active during both prep and hold
+                    ui_state["recognition_active"] = True
                     current_pose = poses[round_index]
-                    if in_hold:
-                        frame, matched, score = handle_pose_recognition(
-                            frame, result, current_pose, ui_state
+
+                    frame, matched, score = handle_pose_recognition(
+                        frame, result, current_pose, ui_state
+                    )
+                    if matched:
+                        any_client_hit = True
+
+                    if score is not None:
+                        total_scores[client_id] = (
+                            total_scores.get(client_id, 0.0) + score
                         )
-                        if score is not None:
-                            total_scores[client_id] = total_scores.get(
-                                client_id, 0.0) + score
-                            sample_counts[client_id] = sample_counts.get(
-                                client_id, 0) + 1
-                    else:
-                        frame, _matched, _score = handle_pose_recognition(
-                            frame, result, current_pose, ui_state
-                        )
+                        sample_counts[client_id] = sample_counts.get(client_id, 0) + 1
 
                     # HOLD PHASE
                     phase_text = "Get ready" if in_prep else "Hold pose"
                     time_left_ms = (
-                        prep_ms -
-                        elapsed if in_prep else (prep_ms + hold_ms - elapsed)
+                        prep_ms - elapsed if in_prep else (prep_ms + hold_ms - elapsed)
                     )
                     time_left = max(0, int(time_left_ms / 1000))
                     cv2.putText(
@@ -167,12 +174,11 @@ async def run_vision():
 
             if match_active and poses and not awaiting_players:
                 elapsed = now_ms - round_start_ms
-                if elapsed >= (prep_ms + hold_ms):
+                if elapsed >= (prep_ms + hold_ms) or any_client_hit:
                     winner = None
                     avg_scores = {
                         client_id: (
-                            total_scores[client_id] /
-                            sample_counts.get(client_id, 1)
+                            total_scores[client_id] / sample_counts.get(client_id, 1)
                         )
                         for client_id in total_scores
                     }
@@ -187,8 +193,17 @@ async def run_vision():
                             "scores": avg_scores,
                         }
                     )
+                    score_str = ", ".join(
+                        [f"Client {c}: {s:.3f}" for c, s in avg_scores.items()]
+                    )
+                    print(f"--- Round {round_index + 1} Finished ---")
+                    print(f"Pose: {poses[round_index]}")
                     print(
-                        f"Round {round_index + 1} result: winner=Client {winner} with scores {avg_scores}")
+                        f"Winner: {'Client ' + str(winner) if winner is not None else 'None'}"
+                    )
+                    print(f"Scores: {score_str}")
+                    print("-" * 25)
+
                     round_index += 1
                     total_scores = {}
                     sample_counts = {}
