@@ -93,9 +93,8 @@ async def run_game():
             continue
 
         elif menu_result == "start":
-            selected_poses = run_pose_menu(surface, poses)
-
-            if selected_poses is None:
+            selected_poses = run_pose_menu(surface, poses, startscreen_background_image)
+            if selected_poses == []:
                 continue
 
             break
