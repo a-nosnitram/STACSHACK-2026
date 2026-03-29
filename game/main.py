@@ -8,7 +8,7 @@ from game.menu import run_pose_menu
 from game.startScreen import run_start_screen
 from game.startMenu import run_start_menu
 from game.character_select import run_character_select
-from game.constants import poses, screen_width, screen_height
+from game.constants import poses, screen_width, screen_height, left_player_x, left_player_y, right_player_x, right_player_y, left_player_hp, right_player_hp
 from game.utils import pose_combo
 
 
@@ -94,15 +94,12 @@ async def run_game():
     )
 
     # left player position
-    left_player_x = 50
-    left_player_y = screen_height - 350
-    left_player_hp = 100
+    left_hp = left_player_hp
+    right_hp = right_player_hp
+
     left_player_name = selected_characters["left"]
 
     # right player position
-    right_player_x = screen_width - 350
-    right_player_y = screen_height - (350 + 32 * 8)
-    right_player_hp = 100
     right_player_name = selected_characters["right"]
 
     # Game loop
@@ -148,11 +145,11 @@ async def run_game():
         draw_progress_bar(screen, current_stage, stages, frame)
 
         # Draw HP bars
-        draw_hp_bar(screen, left_player_hp, 40, 25,
+        draw_hp_bar(screen, left_hp, 40, 25,
                     left_player_name, max_hp=100.0)
         draw_hp_bar(
             screen,
-            right_player_hp,
+            right_hp,
             screen_width - 40 - 320,
             25,
             right_player_name,
@@ -219,17 +216,17 @@ async def run_game():
             # Check for hit (when it becomes inactive)
             if old_active and not fireball.active:
                 if fireball.sender == "1":
-                    right_player_hp -= 20
+                    right_hp -= 20
                 else:
-                    left_player_hp -= 20
+                    left_hp -= 20
 
         fireballs = [fireball for fireball in fireballs if fireball.active]
 
         # Check for win condition
-        left_player_hp, right_player_hp, game_over, winner = handle_win_condition(
+        left_hp, right_hp, game_over, winner = handle_win_condition(
             screen,
-            left_player_hp,
-            right_player_hp,
+            left_hp,
+            right_hp,
             left_player_name,
             right_player_name,
             game_over,
@@ -239,9 +236,9 @@ async def run_game():
         # End the game once all rounds are done and the last projectile has landed.
         if end_after_fireballs and not game_over and not fireballs:
             game_over = True
-            if left_player_hp > right_player_hp:
+            if left_hp > right_hp:
                 winner = left_player_name
-            elif right_player_hp > left_player_hp:
+            elif right_hp > left_hp:
                 winner = right_player_name
             else:
                 winner = "TIE"
