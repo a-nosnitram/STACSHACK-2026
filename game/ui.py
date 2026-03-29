@@ -100,19 +100,49 @@ def draw_hp_bar(screen, hp, x, y, name, flipped=False, max_hp=100.0):
     ratio = hp / max_hp
 
     rect = pygame.Rect(int(x), int(y), 320, 34)
-    fill = _lerp_color((240, 70, 70), (70, 235, 120), ratio)  # red -> green
-    _draw_smooth_bar(screen, rect, ratio=ratio,
-                     fill_color=fill, radius=14, flipped=flipped)
+    pygame.draw.rect(screen, (18, 18, 24), rect, border_radius=4)
+    pygame.draw.rect(screen, (90, 90, 105), rect, width=2, border_radius=4)
 
-    # Label inside the bar (avoids overlapping the progress bar at the top).
-    font = pygame.font.Font(None, 22)
+    # Pixelated segments
+    segments = 20
+    gap = 2
+    inner_pad = 4
+    inner = pygame.Rect(
+        rect.x + inner_pad,
+        rect.y + inner_pad,
+        rect.w - inner_pad * 2,
+        rect.h - inner_pad * 2,
+    )
+    total_gap = gap * (segments - 1)
+    available_w = inner.w - total_gap
+    seg_w = max(1, available_w // segments)
+    remainder = max(0, available_w - (seg_w * segments))
+    seg_h = inner.h
+    filled = int(round(ratio * segments))
+    fill = _lerp_color((240, 70, 70), (54, 167, 88), ratio)  # red -> green
+
+    cursor_x = inner.x
+    for i in range(segments):
+        extra = 1 if i < remainder else 0
+        width = seg_w + extra
+        draw_idx = i if not flipped else (segments - 1 - i)
+        sx = inner.x + draw_idx * (seg_w + gap) + min(draw_idx, remainder)
+        seg_rect = pygame.Rect(sx, inner.y, width, seg_h)
+        color = fill if i < filled else (40, 40, 52)
+        pygame.draw.rect(screen, color, seg_rect)
+
+    # Label (avoids overlapping the progress bar at the top).
+    font = pygame.font.Font("assets/fonts/Silkscreen-Regular.ttf", 32)
     label = font.render(
         f"{name}  {int(hp)}/{int(max_hp)}", True, (245, 245, 250))
-    label_y = rect.y + (rect.h - label.get_height()) // 2
+    label_y = rect.bottom + 6
     if flipped:
         label_x = rect.right - label.get_width() - 10
     else:
         label_x = rect.x + 10
+    shadow = font.render(
+        f"{name}  {int(hp)}/{int(max_hp)}", True, (10, 10, 14))
+    screen.blit(shadow, (label_x + 2, label_y + 2))
     screen.blit(label, (label_x, label_y))
 
 
@@ -148,7 +178,7 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
         screen,
         rect,
         ratio=fill_ratio,
-        fill_color=(70, 235, 120),
+        fill_color=(54, 167, 88),
         track_color=(30, 30, 38),
         radius=16,
         flipped=False,
@@ -162,9 +192,9 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
         cy = int(rect.y + rect.h // 2)
 
         if i < completed:
-            dot = (70, 235, 120)
+            dot = (38, 100, 57)
         elif i == completed:
-            dot = (250, 210, 80)  # current stage
+            dot = (88, 155, 109)  # current stage
         else:
             dot = (95, 95, 110)
 
@@ -207,6 +237,11 @@ def draw_progress_bar(screen, current_stage, stages, selected_poses, frame):
             font = pygame.font.Font("assets/fonts/Silkscreen-Regular.ttf", 26)
             pose_text = font.render(
                 f"{stage_info}", True, (245, 245, 250))
+            shadow = font.render(
+                f"{stage_info}", True, (10, 10, 14))
+            text_x = img_x + (img.get_width() - pose_text.get_width()) // 2
+            text_y = img_y + img.get_height() + 12
+            screen.blit(shadow, (text_x + 2, text_y + 2))
             screen.blit(pose_text, (img_x + 50, img_y + img.get_height() + 12))
 
 
