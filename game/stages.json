@@ -1,29 +1,7 @@
 {
-  "stages": [
-    {
-      "number": 1,
-      "pose": "squat",
-      "image": "assets/poses/squat.png"
-    },
-    {
-      "number": 2,
-      "pose": "bear",
-      "image": "assets/poses/bear.png"
-    },
-    {
-      "number": 3,
-      "pose": "bug",
-      "image": "assets/poses/bug.png"
-    },
-    {
-      "number": 4,
-      "pose": "lunge",
-      "image": "assets/poses/lunge.png"
-    },
-    {
-      "number": 5,
-      "pose": "plank",
-      "image": "assets/poses/plank.png"
-    }
-  ]
+  "squat": "assets/poses/squat.png",
+  "bear": "assets/poses/bear.png",
+  "bug": "assets/poses/bug.png",
+  "lunge": "assets/poses/lunge.png",
+  "plunk": "assets/poses/plank.png"
 }

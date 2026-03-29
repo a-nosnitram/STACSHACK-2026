@@ -145,7 +145,7 @@ async def run_game():
         )
 
         # Draw progress bar
-        draw_progress_bar(screen, current_stage, stages, frame)
+        draw_progress_bar(screen, current_stage, stages, selected_poses, frame)
 
         # Draw HP bars
         draw_hp_bar(screen, left_player_hp, 40, 25,
