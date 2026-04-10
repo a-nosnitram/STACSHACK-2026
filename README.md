@@ -13,12 +13,12 @@
 
 **What It Is**
 - Players compete head‑to‑head.
-- If you perform a pose with better form than your opponent, your avatar **throws a fireball**.
+- If you perform a pose with better form than your opponent, your avatar throws a fireball.
 
 ## What It Does
 - Players select up to 5 physio poses for a set (e.g., squat, plank, lunge, dead‑bug).
 - The game sends that pose list to vision.
-- Vision scores each player’s form by **joint‑angle correctness**.
+- Vision scores each player’s form by joint‑angle correctness.
 - The round winner triggers an in‑game attack.
 
 ## How It Works (High Level)

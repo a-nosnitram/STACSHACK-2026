@@ -11,8 +11,7 @@ import asyncio
 from shared.bus import game_to_vision, vision_to_game
 
 MODEL_PATH = (
-    Path(__file__).resolve().parent /
-    "../models" / "pose_landmarker_heavy.task"
+    Path(__file__).resolve().parent / "../models" / "pose_landmarker_heavy.task"
 )
 
 if not MODEL_PATH.exists():
@@ -63,8 +62,7 @@ async def run_vision():
                 frame = cv2.flip(frame, 1)
 
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                mp_image = mp.Image(
-                    image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
                 timestamp_ms = max(now_ms, last_timestamp_ms + 1)
                 last_timestamp_ms = timestamp_ms
@@ -76,8 +74,7 @@ async def run_vision():
                 if match.match_active and match.poses and not match.awaiting_players:
                     elapsed = now_ms - match.round_start_ms
                     in_prep = elapsed < match.prep_ms
-                    in_hold = match.prep_ms <= elapsed < (
-                        match.prep_ms + match.hold_ms)
+                    in_hold = match.prep_ms <= elapsed < (match.prep_ms + match.hold_ms)
 
                     ui_state["recognition_active"] = in_hold
                     current_pose = match.poses[match.round_index]
@@ -86,10 +83,12 @@ async def run_vision():
                             frame, result, current_pose, ui_state
                         )
                         if score is not None:
-                            match.total_scores[client_id] = match.total_scores.get(
-                                client_id, 0.0) + score
-                            match.sample_counts[client_id] = match.sample_counts.get(
-                                client_id, 0) + 1
+                            match.total_scores[client_id] = (
+                                match.total_scores.get(client_id, 0.0) + score
+                            )
+                            match.sample_counts[client_id] = (
+                                match.sample_counts.get(client_id, 0) + 1
+                            )
                     else:
                         frame, _matched, _score = handle_pose_recognition(
                             frame, result, current_pose, ui_state
@@ -98,9 +97,9 @@ async def run_vision():
                     # HOLD PHASE
                     phase_text = "Get ready" if in_prep else "Hold pose"
                     time_left_ms = (
-                        match.prep_ms -
-                        elapsed if in_prep else (
-                            match.prep_ms + match.hold_ms - elapsed)
+                        match.prep_ms - elapsed
+                        if in_prep
+                        else (match.prep_ms + match.hold_ms - elapsed)
                     )
                     time_left = max(0, int(time_left_ms / 1000))
                     colour = (0, 0, 255) if in_hold else (255, 0, 0)
@@ -142,8 +141,8 @@ async def run_vision():
                     winner = None
                     avg_scores = {
                         client_id: (
-                            match.total_scores[client_id] /
-                            match.sample_counts.get(client_id, 1)
+                            match.total_scores[client_id]
+                            / match.sample_counts.get(client_id, 1)
                         )
                         for client_id in match.total_scores
                     }
@@ -159,7 +158,8 @@ async def run_vision():
                         }
                     )
                     print(
-                        f"Round {match.round_index + 1} result: winner=Client {winner} with scores {avg_scores}")
+                        f"Round {match.round_index + 1} result: winner=Client {winner} with scores {avg_scores}"
+                    )
                     match.round_index += 1
                     match.total_scores = {}
                     match.sample_counts = {}
